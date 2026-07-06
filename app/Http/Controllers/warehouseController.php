@@ -1,0 +1,117 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Warehouse;
+use Illuminate\Support\Facades\Auth;
+
+class warehouseController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request)
+    {
+        $query = Warehouse::query();
+
+        if (Auth::user()->cabang !== "Pusat") {
+            $query->where('cabang', Auth::user()->cabang);
+        }
+
+        // Menambahkan filter pencarian jika ada input 'search'
+        $warehouse = $query->when($request->search, function ($q, $search) {
+            $q->where('barang', 'like', "%{$search}%");
+        })
+        ->when($request->cabang, fn($q, $cabang) => $q->where('cabang', $cabang))
+        ->get();
+
+        return view('warehouse', compact('warehouse'));
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        $request->merge([
+            'harga' => str_replace('.', '', $request->harga)
+        ]);
+        $request->validate([
+            'barang' => 'required|string|max:255',
+            'jumlah' => 'required|integer',
+            'harga' => 'required|numeric',
+            'satuan' => 'required|string|max:255'
+        ]);
+
+        Warehouse::create([
+            'barang' => $request->barang,
+            'jumlah' => $request->jumlah,
+            'harga' => $request->harga,
+            'satuan' => $request->satuan,
+            'cabang' => Auth::user()->cabang
+        ]);
+
+        return redirect()->back()->with('success', 'Barang berhasil ditambahkan');
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(string $id)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $id)
+    {
+        $request->merge([
+            'harga' => str_replace('.', '', $request->harga)
+        ]);
+        $request->validate([
+            'barang' => 'required|string|max:255',
+            'jumlah' => 'required|integer',
+            'harga' => 'required|numeric',
+            'satuan' => 'required|string|max:255'
+        ]);
+
+        Warehouse::where('id', $id)->update([
+            'barang' => $request->barang,
+            'jumlah' => $request->jumlah,
+            'harga' => $request->harga,
+            'satuan' => $request->satuan,
+            'cabang' => Auth::user()->cabang
+        ]);
+
+        return redirect()->back()->with('success', 'Barang berhasil Diperbarui');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        $warehouse = Warehouse::find($id);
+        $warehouse->delete();
+        return redirect()->back()->with('success', 'Barang berhasil dihapus');
+    }
+}
