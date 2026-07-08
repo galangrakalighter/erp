@@ -30,9 +30,12 @@
         
         <select name="role" class="px-4 py-2.5 rounded-xl border border-gray-200 outline-none">
             <option value="">Semua Role</option>
-            <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-            <option value="penjualan" {{ request('role') == 'penjualan' ? 'selected' : '' }}>Penjualan</option>
-            <option value="gudang" {{ request('role') == 'gudang' ? 'selected' : '' }}>Gudang</option>
+            <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Kepala Cabang</option>
+            <option value="penjualan" {{ request('role') == 'penjualan' ? 'selected' : '' }}>Admin Penjualan</option>
+            <option value="gudang" {{ request('role') == 'gudang' ? 'selected' : '' }}>Admin Gudang</option>
+            <option value="pembelian" {{ request('role') == 'pembelian' ? 'selected' : '' }}>Admin Pembelian</option>
+            <option value="sales" {{ request('role') == 'sales' ? 'selected' : '' }}>Sales</option>
+            <option value="pricing" {{ request('role') == 'pricing' ? 'selected' : '' }}>Pricing</option>
         </select>
 
         @if(Auth::user()->cabang == 'Pusat')
@@ -69,27 +72,62 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @foreach($users as $user)
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-6 py-4 text-sm">{{ $loop->iteration }}</td>
-                        <td class="px-6 py-4 font-medium">{{ $user->name }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-500">{{ $user->email }}</td>
-                        <td class="px-6 py-4 text-sm">
-                            <span class="px-2.5 py-1 rounded-full text-xs font-medium 
-                                {{ $user->role == 'admin' ? 'bg-red-100 text-red-700' : ($user->role == 'penjualan' ? 'bg-blue-100 text-blue-700' : ($user->role == 'gudang' ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700')) }}">
-                                {{ strtoupper($user->role) }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-sm"><span class="bg-gray-100 px-2 py-1 rounded-lg text-xs">{{ strtoupper($user->cabang) }}</span></td>
-                        <td class="px-6 py-4 text-sm">{{ $user->created_at?->format('d M Y') ?? '-' }}</td>
-                        <td class="px-6 py-4 flex justify-center gap-2">
-                            <button onclick="openEditModal({{ json_encode($user) }})" class="text-blue-600 hover:text-blue-800">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                            </button>
-                            <button onclick="openDeleteModal('{{ route('users.destroy', $user->id) }}')" class="text-red-600 hover:text-red-800">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                            </button>
-                        </td>
-                    </tr>
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-6 py-4 text-sm">{{ $loop->iteration }}</td>
+                            <td class="px-6 py-4 font-medium">{{ $user->name }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500">{{ $user->email }}</td>
+                            
+                            <td class="px-6 py-4 text-sm">
+                                @php
+                                    $label = strtoupper($user->role); // Default
+                                    if ($user->cabang != 'Pusat') {
+                                        $label = match($user->role) {
+                                            'admin'     => 'Kepala Cabang',
+                                            'gudang'    => 'Admin Gudang',
+                                            'penjualan' => 'Admin Penjualan',
+                                            'pembelian' => 'Admin Pembelian',
+                                            'akuntansi' => 'Admin Akuntansi', 
+                                            'sales' => 'Sales', 
+                                            'pricing' => 'Pricing'
+                                        };
+                                    }else{
+                                        $label = match($user->role) {
+                                            'admin' => 'Owner',
+                                        };
+                                    }
+
+                                    // Tentukan Warna
+                                    $colorClass = match($user->role) {
+                                        'admin'     => 'bg-red-100 text-red-700',
+                                        'penjualan' => 'bg-blue-100 text-blue-700',
+                                        'gudang'    => 'bg-green-100 text-green-700',
+                                        'pembelian'    => 'bg-green-100 text-green-700',
+                                        'akuntansi'    => 'bg-green-100 text-green-700',
+                                        'sales'    => 'bg-green-100 text-green-700',
+                                        'pricing'    => 'bg-green-100 text-green-700',
+                                        default     => 'bg-purple-100 text-purple-700',
+                                    };
+                                @endphp
+
+                                <span class="px-2.5 py-1 rounded-full text-xs font-medium {{ $colorClass }}">
+                                    {{ $label }}
+                                </span>
+                            </td>
+
+                            <td class="px-6 py-4 text-sm">
+                                <span class="bg-gray-100 px-2 py-1 rounded-lg text-xs">{{ strtoupper($user->cabang) }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-sm">{{ $user->created_at?->format('d M Y') ?? '-' }}</td>
+                            <td class="px-6 py-4 flex justify-center gap-2">
+                                <!-- Tombol Edit & Delete Tetap Sama -->
+                                <button onclick="openEditModal({{ json_encode($user) }})" class="text-blue-600 hover:text-blue-800">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                </button>
+                                <button onclick="openDeleteModal('{{ route('users.destroy', $user->id) }}')" class="text-red-600 hover:text-red-800">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                            </td>
+                        </tr>
                     @endforeach
                 </tbody>
             </table>
@@ -108,10 +146,14 @@
             <div class="grid grid-cols-2 gap-4">
                 <select name="role" class="px-4 py-3 rounded-xl border border-gray-200 outline-none">
                     @if(Auth::user()->role == 'admin' && Auth::user()->cabang == 'Pusat')
-                    <option value="admin">Admin</option>
+                    <option value="admin">Kepala Cabang</option>
                     @endif
-                    <option value="penjualan">Penjualan</option>
-                    <option value="gudang">Gudang</option>
+                    <option value="penjualan">Admin Penjualan</option>
+                    <option value="gudang">Admin Gudang</option>
+                    <option value="pembelian">Admin Pembelian</option>
+                    <option value="akuntansi">Admin Akuntansi</option>
+                    <option value="sales">Sales</option>
+                    <option value="pricing">Pricing</option>
                 </select>
                 <select name="cabang" class="px-4 py-3 rounded-xl border border-gray-200 outline-none">
                     @foreach(['Jakarta', 'Bekasi'] as $c)<option value="{{$c}}">{{$c}}</option>@endforeach
@@ -143,10 +185,14 @@
             <div class="grid grid-cols-2 gap-4">
                 <select name="role" id="edit-role" class="px-4 py-3 rounded-xl border border-gray-200 outline-none">
                     @if(Auth::user()->role == 'admin' && Auth::user()->cabang == 'Pusat')
-                    <option value="admin">Admin</option>
+                    <option value="admin">Kepala Cabang</option>
                     @endif
-                    <option value="penjualan">Penjualan</option>
-                    <option value="gudang">Gudang</option>
+                    <option value="penjualan">Admin Penjualan</option>
+                    <option value="gudang">Admin Gudang</option>
+                    <option value="penbelian">Admin Pembelian</option>
+                    <option value="akuntansi">Admin Akuntansi</option>
+                    <option value="sales">Sales</option>
+                    <option value="pricing">Pricing</option>
                 </select>
                 <select name="cabang" id="edit-cabang" class="px-4 py-3 rounded-xl border border-gray-200 outline-none">
                     @foreach(['Jakarta', 'Bekasi'] as $c)

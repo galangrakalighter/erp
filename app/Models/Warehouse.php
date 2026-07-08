@@ -16,4 +16,9 @@ class Warehouse extends Model
         'satuan',
         'cabang'
     ];
+
+    public function requisitionItems()
+    {
+        return $this->hasMany(RequisitionItem::class, 'warehouse_id');
+    }
 }

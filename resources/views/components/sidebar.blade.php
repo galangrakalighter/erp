@@ -6,41 +6,60 @@
     
     <nav class="mt-6 px-4 space-y-2">
         <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('dashboard') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700' }}">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="7" height="7"></rect>
-                <rect x="14" y="3" width="7" height="7"></rect>
-                <rect x="14" y="14" width="7" height="7"></rect>
-                <rect x="3" y="14" width="7" height="7"></rect>
-            </svg>
             <span class="font-medium">Dashboard</span>
         </a>
-        @if(Auth::user()->role == 'admin' || Auth::user()->role == 'penjualan')
-        <a href="{{ route('purchase-order.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition {{ request()->routeIs('purchase-order.*') ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-blue-50' }}">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            Purchase Order
-        </a>
+        @if(in_array(Auth::user()->role, ['admin', 'penjualan', 'sales', 'pricing']))
+            <details class="group" {{ request()->routeIs('penjualan.*') || request()->routeIs('purchase-order.*') || request()->routeIs('quotation.*') ? 'open' : '' }}>
+                <summary class="flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition
+                    {{ request()->routeIs('penjualan.*') || request()->routeIs('purchase-order.*') || request()->routeIs('quotation.*') ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-blue-50' }}">
+                    <span>Penjualan</span>
+                    <svg class="w-4 h-4 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </summary>
+
+                <div class="ml-4 mt-2 space-y-1">
+
+                    {{-- Purchase Order --}}
+                    @if(in_array(Auth::user()->role, ['admin', 'penjualan']))
+                    <a href="{{ route('purchase-order.index') }}"
+                    class="block px-4 py-2 rounded-lg transition
+                    {{ request()->routeIs('purchase-order.*') ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-blue-50' }}">
+                        Purchase Order
+                    </a>
+                    @endif
+
+                    {{-- Quotation --}}
+                    {{-- @if(in_array(Auth::user()->role, ['admin', 'sales', 'pricing']))
+                    <a href="{{ route('quotations.index') }}"
+                    class="block px-4 py-2 rounded-lg transition
+                    {{ request()->routeIs('purchase-order.*') ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-blue-50' }}">
+                        Quotation
+                    </a>
+                    @endif --}}
+
+                </div>
+            </details>
         @endif
         @if(Auth::user()->role == 'admin' || Auth::user()->role == 'gudang')
         <a href="{{ route('warehouse.index') }}" 
            class="flex items-center gap-3 px-4 py-3 rounded-xl transition {{ request()->routeIs('warehouse.*') ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-blue-50' }}">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
             Warehouse
         </a>
         @endif
         @if(Auth::user()->role == 'admin')
         <a href="{{ route('users.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('users.*') ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700' }}">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 21V10.5M12 21V4m-7 17V10.5M5 21H19M5 10.5H19M5 10.5V5a2 2 0 012-2h10a2 2 0 012 2v5.5"></path>
-            </svg>
             <span class="font-medium">Manajemen Cabang</span>
         </a>
         @endif
-        @if(Auth::user()->role == 'admin')
-        <a href="{{ route('sales.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('sales.*') ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700' }}">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 21V10.5M12 21V4m-7 17V10.5M5 21H19M5 10.5H19M5 10.5V5a2 2 0 012-2h10a2 2 0 012 2v5.5"></path>
-            </svg>
-            <span class="font-medium">Sales</span>
+        @if(Auth::user()->role != 'penjualan' && Auth::user()->role != 'sales')
+        <a href="{{ route('requisition.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('requisition.*') ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700' }}">
+            <span class="font-medium">Material Requisition</span>
+        </a>
+        @endif
+        @if(Auth::user()->role == 'admin' || Auth::user()->role == 'akuntansi')
+        <a href="{{ route('transactions.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('transactions.*') ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700' }}">
+            <span class="font-medium">Akuntansi</span>
         </a>
         @endif
     </nav>

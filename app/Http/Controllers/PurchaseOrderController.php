@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PurchaseOrder;
 use App\Models\Warehouse;
-use App\Models\Sales;
+use App\Models\User;
 use App\Models\PurchaseOrderDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -44,7 +44,7 @@ class PurchaseOrderController extends Controller
         
             // dd($purchaseOrders);
         
-        $sales = Sales::where('cabang', Auth::user()->cabang)->get();
+        $sales = User::where('cabang', Auth::user()->cabang)->where('role', 'sales')->get();
 
         // 4. Optimasi pengambilan warehouse
         $warehouse = (Auth::user()->cabang === 'Pusat') 

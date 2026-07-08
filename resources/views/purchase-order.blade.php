@@ -667,7 +667,9 @@
                     type="number"
                     name="jumlah_beli[]"
                     class="w-full border rounded-xl p-2"
-                    value="${data ? data.jumlah : ''}">
+                    value="${data ? data.jumlah : ''}"
+                    oninput="stockPesan('${rowId}')"
+                    >
 
                 <small id="info-stok-${rowId}"></small>
 
@@ -701,6 +703,15 @@
         } else {
             inputJumlah.removeAttribute('max');
             infoStok.textContent = '';
+        }
+    }
+
+    function stockPesan(rowId){
+        const inputJumlah = document.getElementById(`input-jumlah-${rowId}`);
+        let max = parseInt(inputJumlah.max);
+        if(inputJumlah.value > max){
+            alert('Jumlah Melebihi Stock');
+            inputJumlah.value = max
         }
     }
 
