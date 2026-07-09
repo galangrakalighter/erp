@@ -30,13 +30,13 @@
                     @endif
 
                     {{-- Quotation --}}
-                    {{-- @if(in_array(Auth::user()->role, ['admin', 'sales', 'pricing']))
+                    @if(in_array(Auth::user()->role, ['admin', 'sales', 'pricing', 'penjualan']))
                     <a href="{{ route('quotations.index') }}"
                     class="block px-4 py-2 rounded-lg transition
-                    {{ request()->routeIs('purchase-order.*') ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-blue-50' }}">
+                    {{ request()->routeIs('quotations-order.*') ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-blue-50' }}">
                         Quotation
                     </a>
-                    @endif --}}
+                    @endif
 
                 </div>
             </details>

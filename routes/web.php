@@ -16,6 +16,8 @@ Route::post('/login', [UserController::class, 'login'])->name('login');
 Route::post('/logout', [UserController::class, 'logout'])->name('logout');
 Route::get('/dashboard', [UserController::class, 'dashboard'])->name('dashboard');
 Route::get('/purchase-order/{id}/print', [PurchaseOrderController::class,'print'])->name('purchase-order.print');
+Route::post('/plat/request', [QuotationController::class, 'requestPlat'])->name('request_plat');
+Route::post('/plat/cancel', [QuotationController::class, 'cancelPlat'])->name('cancel_plat');
 Route::get('/purchase-order/{id}/quotation', [PurchaseOrderController::class,'quotation'])->name('purchase-order.quotation');
 Route::get('/purchase-order/{id}/invoice', [PurchaseOrderController::class,'invoice'])->name('purchase-order.invoice');
 Route::get('/purchase-order/{id}/faktur', [PurchaseOrderController::class,'faktur'])->name('purchase-order.faktur');

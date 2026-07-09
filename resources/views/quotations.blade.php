@@ -5,6 +5,8 @@
 
 @section('content')
 <div class="space-y-6 animate-in fade-in duration-500">
+
+    <div id="notification-area"></div>
     
     @if (session('success'))
         <div id="flash-msg" class="bg-green-50 text-green-700 p-4 rounded-xl border border-green-200">{{ session('success') }}</div>
@@ -22,6 +24,9 @@
         @endif
     </div>
 
+    <input type="hidden" id="cabang" value="{{ $cabang }}">
+    <input type="hidden" id="role" value="{{ Auth::user()->role }}">
+
     <!-- Table -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <table class="w-full text-left">
@@ -30,46 +35,15 @@
                     <th class="px-6 py-4 text-sm">No</th>
                     <th class="px-6 py-4 text-sm">No. Quotation</th>
                     <th class="px-6 py-4 text-sm">Customer</th>
+                    @if(Auth::user()->cabang == 'Pusat')
+                    <th class="px-6 py-4 text-sm">Cabang</th>
+                    @endif
                     <th class="px-6 py-4 text-sm">Total</th>
                     <th class="px-6 py-4 text-sm text-center">Aksi</th>
                 </tr>
             </thead>
-            <tbody class="divide-y">
-                @foreach($quotations as $q)
-                <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 text-sm">{{ $loop->iteration }}</td>
-                    <td class="px-6 py-4 font-medium">{{ $q->quotation_number }}</td>
-                    <td class="px-6 py-4 text-sm">{{ $q->nama_customer }}</td>
-                    <td class="px-6 py-4 text-sm">Rp {{ number_format($q->total_amount, 0, ',', '.') }}</td>
-                    <td class="px-6 py-4 flex justify-center gap-2">
-                        @if(Auth::user()->role == 'pricing')
-                            @if(!$q->status)
-                            <button onclick='openApproveModal(@json($q))' class="text-green-600 hover:text-green-800">
-                                Detail
-                            </button>
-                            @else
-                            <span class="text-gray-400 text-sm italic">
-                                Sudah Di-approve
-                            </span>
-                            @endif
-                        @else
-                            @if(!$q->status)
-                                <button onclick='openEditModal(@json($q))' class="text-blue-600 hover:text-blue-800">
-                                    Edit
-                                </button>
+            <tbody id="quotation-table" class="divide-y">
 
-                                <button onclick="openDeleteModal('{{ route('quotations.destroy', $q->id) }}')" class="text-red-600 hover:text-red-800">
-                                    Hapus
-                                </button>
-                            @else
-                                <span class="text-gray-400 text-sm italic">
-                                    Sudah Di-approve
-                                </span>
-                            @endif
-                        @endif
-                    </td>
-                </tr>
-                @endforeach
             </tbody>
         </table>
     </div>
@@ -372,7 +346,7 @@
         </form>
     </div>
 </div>
-
+<script src="{{ asset('js/request-plat.js') }}"></script>
 <script>
     function toggleModal(id, show) {
         document.getElementById(id).classList.toggle('hidden', !show);
@@ -430,14 +404,7 @@
                         name="items[${editItemIndex}][inventory_id]"
                         class="w-1/2 px-3 py-2 rounded-lg border">
 
-                        @foreach($inventories as $inv)
-
-                            <option value="{{ $inv->id }}"
-                                ${item.inventory_id == {{ $inv->id }} ? 'selected' : ''}>
-                                {{ $inv->barang }}
-                            </option>
-
-                        @endforeach
+                        ${inventoryOptions(item.inventory.barang)}
 
                     </select>
 
@@ -474,13 +441,7 @@
                     name="items[${editItemIndex}][inventory_id]"
                     class="w-1/2 px-3 py-2 rounded-lg border">
 
-                    @foreach($inventories as $inv)
-
-                        <option value="{{ $inv->id }}">
-                            {{ $inv->barang }}
-                        </option>
-
-                    @endforeach
+                     ${inventoryOptions()}
 
                 </select>
 

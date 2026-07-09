@@ -16,11 +16,56 @@ class QuotationController extends Controller
     public function index()
     {
         // Mengambil data quotation beserta itemnya
-        $quotations = Quotation::with('items.inventory')->where('cabang', Auth::user()->cabang)->get();
-        // Mengambil data inventori untuk pilihan di dropdown modal
-        $inventories = Warehouse::where('cabang', Auth::user()->cabang)->get(); 
+        $cabang = Auth::user()->cabang;
+        if($cabang == 'Pusat'){
+            $inventories = Warehouse::all(); 
+        }else{
+            // Mengambil data inventori untuk pilihan di dropdown modal
+            $inventories = Warehouse::where('cabang', $cabang)->get();    
+        }
 
-        return view('quotations', compact('quotations', 'inventories'));
+
+        return view('quotations', compact('inventories', 'cabang'));
+    }
+
+    public function getDataQuotation($cabang)
+    {
+        if ($cabang == 'Pusat') {
+            $quotations = Quotation::with('items.inventory')->get();
+        } else {
+            $quotations = Quotation::with('items.inventory')
+                ->where('cabang', $cabang)
+                ->get();
+        }
+
+        return response()->json($quotations);
+    }
+
+    public function getInventories($cabang)
+    {
+        if ($cabang == 'Pusat') {
+            $inventories = Warehouse::all();
+        } else {
+            $inventories = Warehouse::where('cabang', $cabang)->get();
+        }
+
+        return response()->json($inventories);
+    }
+
+    public function requestPlat(Request $request){
+        $quotation = Quotation::find($request->plat_id);
+        $quotation->update([
+            'status' => 2
+        ]);
+        return response()->json(['status' => 'Berhasil Request', 'data' => $quotation]);
+    }
+
+    public function cancelPlat(Request $request){
+        $quotation = Quotation::find($request->plat_id);
+        $quotation->update([
+            'status' => 1
+        ]);
+        return response()->json(['status' => 'Berhasil Request', 'data' => $quotation]);
     }
 
     public function approve($id)
@@ -58,7 +103,7 @@ class QuotationController extends Controller
 
             // Approve quotation
             $quotation->update([
-                'status'      => true,
+                'status'      => 1,
                 'approved_by' => Auth::id(),      // optional
                 'approved_at' => now(),           // optional
             ]);
@@ -80,7 +125,7 @@ class QuotationController extends Controller
 
             // Approve quotation
             $quotation->update([
-                'status'      => false,
+                'status'      => 0,
                 'approved_by' => null,      // optional
                 'approved_at' => null,           // optional
             ]);
@@ -128,7 +173,7 @@ class QuotationController extends Controller
                 'valid_until'          => $request->valid_until,
                 'total_amount'         => $totalAmount,
                 'cabang'               => Auth::user()->cabang,
-                'status'               => null
+                'status'               => 0
             ]);
 
             // 4. Simpan Item Quotation
