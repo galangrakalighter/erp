@@ -638,7 +638,7 @@
 
 </div>
 
-<script src="{{ asset('js/request-plat.js') }}"></script>
+<script src="{{ asset('js/request-baru.js') }}"></script>
 <script>
     function toggleModal(id, show) {
         document.getElementById(id).classList.toggle('hidden', !show);
