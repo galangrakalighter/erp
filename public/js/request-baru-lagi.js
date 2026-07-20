@@ -7,7 +7,7 @@ async function requestPlat(id) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer YOUR_TOKEN' // Sesuaikan dengan sistem auth Anda
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content // Sesuaikan dengan sistem auth Anda
             },
             body: JSON.stringify({ 
                 plat_id: id,
