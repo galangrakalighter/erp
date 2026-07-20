@@ -3,15 +3,19 @@ const role = document.getElementById('role').value;
 console.log("masuk sini");
 async function requestPlat(id) {
     try {
+        const token = document.querySelector('meta[name="csrf-token"]').content;
+
         const response = await fetch(`${API_BASE_URL}/plat/request`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content // Sesuaikan dengan sistem auth Anda
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json'
             },
-            body: JSON.stringify({ 
+            credentials: 'same-origin',
+            body: JSON.stringify({
                 plat_id: id,
-                timestamp: new Date().toISOString() 
+                timestamp: new Date().toISOString()
             })
         });
 
