@@ -224,7 +224,7 @@ async function loadSpk(){
 
             <td class="px-5 py-4">
 
-                ${item.quotation.nama_customer ?? '-'}
+                ${item.warehouse.quotation.nama_customer ?? '-'}
 
             </td>
 
