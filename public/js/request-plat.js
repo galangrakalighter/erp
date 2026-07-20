@@ -1,6 +1,6 @@
 const API_BASE_URL = "{{ config('app.url') }}";
 const role = document.getElementById('role').value;
-console.log("masuk sini", API_BASE_URL);
+console.log("masuk sini");
 async function requestPlat(id) {
     try {
         const response = await fetch(`${API_BASE_URL}/plat/request`, {
