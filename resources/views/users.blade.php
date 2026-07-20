@@ -88,7 +88,8 @@
                                             'pembelian' => 'Admin Pembelian',
                                             'akuntansi' => 'Admin Akuntansi', 
                                             'sales' => 'Sales', 
-                                            'pricing' => 'Pricing'
+                                            'pricing' => 'Pricing',
+                                            'production' => 'Production'
                                         };
                                     }else{
                                         $label = match($user->role) {
@@ -105,6 +106,7 @@
                                         'akuntansi'    => 'bg-green-100 text-green-700',
                                         'sales'    => 'bg-green-100 text-green-700',
                                         'pricing'    => 'bg-green-100 text-green-700',
+                                        'production'    => 'bg-green-100 text-green-700',
                                         default     => 'bg-purple-100 text-purple-700',
                                     };
                                 @endphp
@@ -154,6 +156,7 @@
                     <option value="akuntansi">Admin Akuntansi</option>
                     <option value="sales">Sales</option>
                     <option value="pricing">Pricing</option>
+                    <option value="production">Production</option>
                 </select>
                 <select name="cabang" class="px-4 py-3 rounded-xl border border-gray-200 outline-none">
                     @foreach(['Jakarta', 'Bekasi'] as $c)<option value="{{$c}}">{{$c}}</option>@endforeach
@@ -193,6 +196,7 @@
                     <option value="akuntansi">Admin Akuntansi</option>
                     <option value="sales">Sales</option>
                     <option value="pricing">Pricing</option>
+                    <option value="production">Production</option>
                 </select>
                 <select name="cabang" id="edit-cabang" class="px-4 py-3 rounded-xl border border-gray-200 outline-none">
                     @foreach(['Jakarta', 'Bekasi'] as $c)

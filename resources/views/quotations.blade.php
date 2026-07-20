@@ -228,7 +228,7 @@
             
             <!-- Items -->
             <div id="items-container" class="space-y-3 border-t pt-4">
-                <h3 class="font-semibold text-sm text-gray-900">Item Produk</h3>
+                <h3 class="font-semibold text-sm text-gray-900">Item</h3>
                 
                 <div class="flex gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     <div class="w-1/2 px-1">Produk</div>
@@ -243,6 +243,7 @@
                             <option value="{{ $inv->id }}">{{ $inv->barang }}</option>
                         @endforeach
                     </select>
+                    {{-- <input type="text" name="items[0][nama_barang]" placeholder="Nama Produk" class="w-1/2 px-3 py-2 rounded-lg border border-gray-200" required> --}}
                     <input type="number" name="items[0][quantity]" placeholder="Qty" class="w-1/4 px-3 py-2 rounded-lg border border-gray-200" required>
                     <input type="number" name="items[0][unit_price]" placeholder="Harga" class="w-1/4 px-3 py-2 rounded-lg border border-gray-200" required>
                 </div>
@@ -346,6 +347,297 @@
         </form>
     </div>
 </div>
+
+{{-- Detail Plat --}}
+<div id="platDetailModal"
+     class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+
+
+        <h2 class="text-lg font-bold mb-5">
+            Detail Request Plat
+        </h2>
+
+
+        <div class="space-y-4">
+
+
+            <div>
+                <label class="text-sm text-gray-500">
+                    Lokasi Plat
+                </label>
+
+                <p id="detail-lokasi"
+                   class="font-medium">
+                </p>
+            </div>
+
+
+            <div>
+                <label class="text-sm text-gray-500">
+                    Catatan
+                </label>
+
+                <p id="detail-catatan"
+                   class="font-medium">
+                </p>
+            </div>
+
+
+            <div>
+                <label class="text-sm text-gray-500">
+                    Approved At
+                </label>
+
+                <p id="detail-approved"
+                   class="font-medium">
+                </p>
+            </div>
+
+
+        </div>
+
+
+        <div class="mt-6 text-right">
+
+            <button
+                onclick="closePlatDetailModal()"
+                class="px-4 py-2 bg-gray-800 text-white rounded-lg">
+                Tutup
+            </button>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+{{-- SPK Warehouse --}}
+<div
+    id="warehouseModal"
+    class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+
+    <div class="bg-white rounded-xl w-full max-w-lg shadow-xl">
+
+        <div class="border-b px-6 py-4">
+            <h2 class="text-lg font-bold">
+                Kirim SPK ke Warehouse
+            </h2>
+        </div>
+
+        <div class="p-6">
+
+            <input type="hidden" id="warehouseQuotationId">
+
+            <div class="space-y-3">
+
+                <div>
+                    <label class="text-sm text-gray-500">
+                        No Quotation
+                    </label>
+
+                    <div id="warehouseQuotationNumber"
+                        class="font-semibold">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-sm text-gray-500">
+                        Customer
+                    </label>
+
+                    <div id="warehouseCustomer"
+                        class="font-semibold">
+                    </div>
+                </div>
+
+                <div class="mt-4">
+
+                    <label class="text-sm text-gray-500 font-medium">
+                        Daftar Barang
+                    </label>
+
+                    <div
+                        id="warehouseItems"
+                        class="mt-2 border rounded-lg overflow-hidden">
+                    </div>
+
+                </div>
+
+                <div>
+                    <label class="text-sm text-gray-500">
+                        Catatan
+                    </label>
+
+                    <textarea
+                        id="warehouseNote"
+                        class="w-full border rounded-lg p-3 mt-1"
+                        rows="4"
+                        placeholder="Tambahkan catatan untuk warehouse (opsional)"></textarea>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="border-t px-6 py-4 flex justify-end gap-2">
+
+            <button
+                onclick="closeWarehouseModal()"
+                class="px-4 py-2 rounded-lg border">
+                Batal
+            </button>
+
+            <button
+                onclick="sendSpkWarehouse()"
+                class="px-4 py-2 rounded-lg bg-blue-600 text-white">
+                Kirim SPK
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+<div
+    id="productionModal"
+    class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+
+    <div class="bg-white rounded-xl w-full max-w-lg shadow-xl">
+
+        <div class="border-b px-6 py-4">
+            <h2 class="text-lg font-bold">
+                Buat SPK Production
+            </h2>
+        </div>
+
+
+        <div class="p-6">
+
+            <input type="hidden" id="productionWarehouseSpkId">
+
+
+            <div class="space-y-4">
+
+
+                <div>
+                    <label class="text-sm text-gray-500">
+                        No SPK Warehouse
+                    </label>
+
+                    <div 
+                        id="productionSpkNumber"
+                        class="font-semibold">
+                    </div>
+                </div>
+
+
+
+                <div>
+                    <label class="text-sm text-gray-500">
+                        Customer
+                    </label>
+
+                    <div 
+                        id="productionCustomer"
+                        class="font-semibold">
+                    </div>
+                </div>
+
+
+
+                <div>
+                    <label class="text-sm text-gray-500">
+                        PIC Production
+                    </label>
+
+
+                    <select 
+                        id="productionPic"
+                        class="w-full border rounded-lg p-2 mt-1">
+
+                        <option value="">
+                            Pilih PIC
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+
+                <div>
+
+                    <label class="text-sm text-gray-500 font-medium">
+                        Material / Barang
+                    </label>
+
+
+                    <div
+                        id="productionItems"
+                        class="mt-2 border rounded-lg overflow-hidden">
+
+                    </div>
+
+                </div>
+
+
+
+                <div>
+
+                    <label class="text-sm text-gray-500">
+                        Catatan
+                    </label>
+
+
+                    <textarea
+                        id="productionNote"
+                        class="w-full border rounded-lg p-3 mt-1"
+                        rows="4"
+                        placeholder="Catatan Production">
+                    </textarea>
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+        <div class="border-t px-6 py-4 flex justify-end gap-2">
+
+
+            <button
+                onclick="closeProductionModal()"
+                class="px-4 py-2 rounded-lg border">
+
+                Batal
+
+            </button>
+
+
+
+            <button
+                onclick="sendSpkProduction()"
+                class="px-4 py-2 rounded-lg bg-blue-600 text-white">
+
+                Buat SPK Production
+
+            </button>
+
+
+        </div>
+
+
+    </div>
+
+</div>
+
 <script src="{{ asset('js/request-plat.js') }}"></script>
 <script>
     function toggleModal(id, show) {

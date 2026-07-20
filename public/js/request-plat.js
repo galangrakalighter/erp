@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://127.0.0.1:8000';
+const API_BASE_URL = 'http://127.0.0.1:8001';
 const role = document.getElementById('role').value;
 async function requestPlat(id) {
     try {
@@ -83,6 +83,8 @@ async function loadQuotations() {
 
     quotations = await response.json();
 
+    console.log(quotations);
+
     renderQuotationTable();
 }
 
@@ -122,7 +124,6 @@ function renderQuotationTable() {
 }
 
 function renderAction(q, index) {
-
     if (role === 'sales') {
         if(q.status === 0){
             return `
@@ -194,6 +195,37 @@ function renderAction(q, index) {
                 </button>
             `;
         }
+
+        if (q.status == 3) {
+
+            return `
+                <button
+                    onclick="openPlatDetailModal(quotations[${index}])"
+                    class="px-3 py-2 border border-green-600 text-green-600 rounded-lg hover:bg-green-50">
+                    Detail Plat
+                </button>
+
+                ${
+                    q.spk_warehouse == null
+                    ?
+                    `
+                    <button
+                        onclick="openWarehouseModal(quotations[${index}])"
+                        class="px-3 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50">
+                        SPK Warehouse
+                    </button>
+                    `
+                    :
+                    `
+                    <button
+                        onclick="openProductionModal(quotations[${index}])"
+                        class="px-3 py-2 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50">
+                        SPK Production
+                    </button>
+                    `
+                }
+            `;
+        }
     }
 
     return `
@@ -201,6 +233,416 @@ function renderAction(q, index) {
             Tidak Ada Akses
         </span>
     `;
+}
+
+function openWarehouseModal(q){
+
+    console.log(q);
+
+    document.getElementById('warehouseQuotationId').value = q.id;
+
+    document.getElementById('warehouseQuotationNumber').innerText =
+        q.quotation_number;
+
+    document.getElementById('warehouseCustomer').innerText =
+        q.nama_customer;
+
+    document.getElementById('warehouseNote').value = '';
+
+    let html = `
+        <table class="w-full text-sm">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-3 py-2 text-left">
+                        Barang
+                    </th>
+                    <th class="px-3 py-2 text-center">
+                        Jumlah
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    q.items.forEach(item => {
+
+        html += `
+            <tr class="border-t">
+
+                <td class="px-3 py-2">
+
+                    <div class="font-medium">
+                        ${item.inventory?.barang ?? '-'}
+                    </div>
+
+                </td>
+
+                <td class="px-3 py-2 text-center">
+                    ${item.quantity}
+                </td>
+
+            </tr>
+        `;
+
+    });
+
+    html += `
+            </tbody>
+        </table>
+    `;
+
+    document.getElementById('warehouseItems').innerHTML = html;
+
+    document
+        .getElementById('warehouseModal')
+        .classList.remove('hidden');
+
+    document
+        .getElementById('warehouseModal')
+        .classList.add('flex');
+}
+
+function closeWarehouseModal(){
+
+    const modal = document.getElementById('warehouseModal');
+
+    modal.classList.remove('flex');
+    modal.classList.add('hidden');
+
+}
+
+function openProductionModal(spk){
+
+
+    console.log(spk);
+
+
+    document.getElementById(
+        'productionWarehouseSpkId'
+    ).value = spk.id;
+
+
+
+    document.getElementById(
+        'productionSpkNumber'
+    ).innerText = spk.spk_warehouse.spk_number;
+
+
+
+    document.getElementById(
+        'productionCustomer'
+    ).innerText =
+        spk.nama_customer;
+
+
+
+    document.getElementById(
+        'productionNote'
+    ).value='';
+
+
+
+    let html=`
+
+    <table class="w-full text-sm">
+
+        <thead class="bg-gray-100">
+
+            <tr>
+
+                <th class="px-3 py-2 text-left">
+                    Barang
+                </th>
+
+
+                <th class="px-3 py-2 text-center">
+                    Qty
+                </th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+    `;
+
+
+
+    spk.items.forEach(item=>{
+
+
+        html+=`
+
+        <tr class="border-t">
+
+
+            <td class="px-3 py-2">
+
+                ${item.inventory?.barang ?? '-'}
+
+            </td>
+
+
+            <td class="px-3 py-2 text-center">
+
+                ${item.quantity}
+
+            </td>
+
+
+        </tr>
+
+        `;
+
+
+    });
+
+
+
+    html+=`
+
+        </tbody>
+
+    </table>
+
+    `;
+
+
+
+    document.getElementById(
+        'productionItems'
+    ).innerHTML=html;
+
+
+
+    loadProductionPIC();
+
+
+
+    const modal=document.getElementById(
+        'productionModal'
+    );
+
+
+    modal.classList.remove('hidden');
+
+    modal.classList.add('flex');
+
+}
+
+async function loadProductionPIC(){
+
+    const cabang = document.getElementById('cabang').value;
+    console.log(cabang);
+
+    const response = await fetch(
+        `/api/users/production?cabang=${cabang}`
+    );
+
+
+    const data = await response.json();
+
+
+
+    let html = `
+        <option value="">
+            Pilih PIC
+        </option>
+    `;
+
+
+
+    data.forEach(user => {
+
+        html += `
+            <option value="${user.id}">
+                ${user.name}
+            </option>
+        `;
+
+    });
+
+
+
+    document.getElementById(
+        'productionPic'
+    ).innerHTML = html;
+
+}
+
+function closeProductionModal(){
+
+    const modal = document.getElementById('productionModal');
+
+    modal.classList.remove('flex');
+    modal.classList.add('hidden');
+
+}
+
+async function sendSpkProduction(){
+
+
+    const id =
+    document.getElementById(
+        'productionWarehouseSpkId'
+    ).value;
+
+
+
+    const pic =
+    document.getElementById(
+        'productionPic'
+    ).value;
+
+
+
+    const note =
+    document.getElementById(
+        'productionNote'
+    ).value;
+
+
+
+    if(!pic){
+
+        alert('Pilih PIC');
+
+        return;
+
+    }
+
+
+
+    const response = await fetch(
+        `/api/production/spk/${id}`,
+        {
+
+        method:'POST',
+
+        headers:{
+
+            'Content-Type':'application/json',
+
+            'X-CSRF-TOKEN':
+            document.querySelector(
+                'meta[name="csrf-token"]'
+            ).content
+
+        },
+
+
+        body:JSON.stringify({
+
+            pic_production_id:pic,
+
+            note:note
+
+        })
+
+
+    });
+
+
+
+    const result = await response.json();
+
+
+
+    if(!response.ok){
+
+        alert(result.message);
+
+        return;
+
+    }
+
+
+
+    closeProductionModal();
+
+
+    loadSpk();
+
+
+    alert(
+        'SPK Production berhasil dibuat'
+    );
+
+}
+
+async function sendSpkWarehouse(){
+
+    const id = document.getElementById('warehouseQuotationId').value;
+
+    const note = document.getElementById('warehouseNote').value;
+
+    try{
+        let cabang = document.getElementById('cabang').value;
+        const response = await fetch(`/api/warehouse/spk/${id}`,{
+
+            method:'POST',
+            
+            headers:{
+                'Content-Type':'application/json',
+                'X-CSRF-TOKEN':document
+                    .querySelector('meta[name="csrf-token"]').content
+            },
+
+            body:JSON.stringify({
+                note:note,
+                cabang: cabang
+            })
+
+        });
+
+        const result = await response.json();
+
+        console.log(result);
+
+        if(!response.ok){
+            throw new Error(result.message);
+        }
+
+        closeWarehouseModal();
+
+        loadQuotations();
+
+        alert('SPK berhasil dikirim ke Warehouse.');
+
+    }catch(err){
+
+        alert(err.message);
+
+    }
+
+}
+
+function closePlatDetailModal(){
+
+    document.getElementById('platDetailModal').classList.add('hidden');
+
+}
+
+function openPlatDetailModal(q){
+
+    const plat = q.request_plat;
+
+
+    document.getElementById('detail-lokasi').innerText =
+        plat?.lokasi_plat ?? '-';
+
+
+    document.getElementById('detail-catatan').innerText =
+        plat?.catatan ?? '-';
+
+
+    document.getElementById('detail-approved').innerText =
+        plat?.approved_at ?? '-';
+
+
+    document.getElementById('platDetailModal').classList.remove('hidden');
+
 }
 
 let inventories = [];

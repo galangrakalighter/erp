@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Warehouse;
+use App\Models\RequestPlat;
+use App\Models\Quotation;
 use Illuminate\Support\Facades\Auth;
-
+use App\Events\RequestPlatUpdated;
 class warehouseController extends Controller
 {
     /**
@@ -27,6 +29,42 @@ class warehouseController extends Controller
         ->get();
 
         return view('warehouse', compact('warehouse'));
+    }
+
+    public function request(){
+        return view('warehouse.request_plat');
+    }
+
+    public function spk(){
+        return view('warehouse.spk');
+    }
+
+    public function approveQuotation(Request $request, $id){
+        $request->validate([
+            'lokasi_plat' => 'required|string|max:255',
+            'catatan' => 'nullable|string'
+        ]);
+
+        $plat = RequestPlat::findOrFail($id);
+        $quotation = Quotation::find($plat->quotation_id);
+
+        $quotation->update([
+            'status' => 3
+        ]);
+
+        $plat->update([
+            'status' => 1,
+            'approve_user_id' => Auth::id(),
+            'approved_at' => now(),
+            'lokasi_plat' => $request->lokasi_plat,
+            'catatan' => $request->catatan,
+        ]);
+
+        broadcast(new RequestPlatUpdated());
+
+        return response()->json([
+            'status' => 'Request berhasil di-approve.'
+        ]);
     }
 
     /**

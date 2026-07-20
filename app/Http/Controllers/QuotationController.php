@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Quotation;
+use App\Models\RequestPlat;
 use App\Models\Warehouse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-
+use App\Events\RequestPlatUpdated;
 class QuotationController extends Controller
 {
     /**
@@ -24,21 +25,31 @@ class QuotationController extends Controller
             $inventories = Warehouse::where('cabang', $cabang)->get();    
         }
 
-
         return view('quotations', compact('inventories', 'cabang'));
     }
 
     public function getDataQuotation($cabang)
     {
-        if ($cabang == 'Pusat') {
-            $quotations = Quotation::with('items.inventory')->get();
-        } else {
-            $quotations = Quotation::with('items.inventory')
-                ->where('cabang', $cabang)
-                ->get();
+
+        $query = Quotation::with([
+            'items.inventory',
+            'requestPlat',
+            'spkWarehouse'
+        ]);
+
+
+        if ($cabang != 'Pusat') {
+
+            $query->where('cabang', $cabang);
+
         }
 
+
+        $quotations = $query->get();
+
+
         return response()->json($quotations);
+
     }
 
     public function getInventories($cabang)
@@ -52,20 +63,44 @@ class QuotationController extends Controller
         return response()->json($inventories);
     }
 
-    public function requestPlat(Request $request){
-        $quotation = Quotation::find($request->plat_id);
+    public function requestPlat(Request $request)
+    {
+        $quotation = Quotation::findOrFail($request->plat_id);
+
         $quotation->update([
             'status' => 2
         ]);
-        return response()->json(['status' => 'Berhasil Request', 'data' => $quotation]);
+
+        $requestPlat = RequestPlat::create([
+            'quotation_id'    => $quotation->id,
+            'request_user_id' => Auth::id(),
+            'status'          => 0,
+        ]);
+
+        broadcast(new RequestPlatUpdated($requestPlat))->toOthers();
+
+        return response()->json([
+            'status' => 'Berhasil Request',
+            'data'   => $quotation
+        ]);
     }
 
-    public function cancelPlat(Request $request){
-        $quotation = Quotation::find($request->plat_id);
+    public function cancelPlat(Request $request)
+    {
+        $quotation = Quotation::findOrFail($request->plat_id);
+
         $quotation->update([
             'status' => 1
         ]);
-        return response()->json(['status' => 'Berhasil Request', 'data' => $quotation]);
+
+        RequestPlat::where('quotation_id', $quotation->id)->delete();
+
+        broadcast(new RequestPlatUpdated())->toOthers();
+
+        return response()->json([
+            'status' => 'Berhasil Cancel Request',
+            'data'   => $quotation
+        ]);
     }
 
     public function approve($id)

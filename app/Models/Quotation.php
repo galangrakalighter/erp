@@ -24,4 +24,14 @@ class Quotation extends Model
     {
         return $this->hasMany(QuotationItem::class, 'quotation_id');
     }
+    
+    public function requestPlat()
+    {
+        return $this->hasOne(RequestPlat::class, 'quotation_id');
+    }
+
+    public function spkWarehouse()
+    {
+        return $this->hasOne(SPKWarehouse::class, 'quotation_id');
+    }
 }

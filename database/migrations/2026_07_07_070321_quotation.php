@@ -18,6 +18,7 @@ return new class extends Migration
             $table->date('valid_until');
             $table->decimal('total_amount', 15, 2);
             $table->text('terms_and_conditions')->nullable();
+            $table->string('cabang');
             $table->timestamps();
         });
 
@@ -25,7 +26,7 @@ return new class extends Migration
         Schema::create('quotation_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('quotation_id')->constrained('quotations')->onDelete('cascade');
-            $table->foreignId('warehouse_id')->constrained('warehouse');
+            $table->string('nama_barang');
             $table->integer('quantity');
             $table->decimal('unit_price', 15, 2);
             $table->decimal('subtotal', 15, 2);
