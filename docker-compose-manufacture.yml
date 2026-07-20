@@ -6,21 +6,22 @@ services:
     volumes:
       - .:/var/www
     networks:
-      - laravel
+      - erp_lmg_laravel
 
   web:
     image: nginx:alpine
     container_name: manufacture_nginx
     restart: unless-stopped
     ports:
-      - "8001:80"
+      - "8001:80" # Akses dari luar pakai port 8001, di dalam container pakai port 80
     volumes:
       - .:/var/www
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - app
     networks:
-      - laravel
+      - erp_lmg_laravel # Disamakan dengan service app
 
 networks:
-  laravel:
+  erp_lmg_laravel:
+    external: true
