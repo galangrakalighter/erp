@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://demoklien.lightermediagroup.com/";
+const API_BASE_URL = "https://demoklien.lightermediagroup.com";
 const role = document.getElementById('role').value;
 console.log("masuk sini");
 async function requestPlat(id) {
