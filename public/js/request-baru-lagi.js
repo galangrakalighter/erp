@@ -1,9 +1,9 @@
 const API_BASE_URL = "https://demoklien.lightermediagroup.com";
 const role = document.getElementById('role').value;
+const token = document.querySelector('meta[name="csrf-token"]').content;
 console.log("masuk sini");
 async function requestPlat(id) {
     try {
-        const token = document.querySelector('meta[name="csrf-token"]').content;
 
         const response = await fetch(`${API_BASE_URL}/plat/request`, {
             method: 'POST',
