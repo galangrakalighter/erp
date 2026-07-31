@@ -281,24 +281,24 @@ class QuotationController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'nama_customer'    => 'required|string|max:255',
-            'alamat_customer'  => 'required|string',
-            'penerima'         => 'required|string|max:255',
-            'alamat_penerima'  => 'required|string',
-            'tanggal_pesan'    => 'required|date',
-            'tipe_pemesanan'   => 'required|string',
+            'nama_customer'    => 'nullable|string|max:255',
+            'alamat_customer'  => 'nullable|string',
+            'penerima'         => 'nullable|string|max:255',
+            'alamat_penerima'  => 'nullable|string',
+            'tanggal_pesan'    => 'nullable|date',
+            'tipe_pemesanan'   => 'nullable|string',
 
-            'id_barang'        => 'required|exists:warehouse,id',
-            'quantity'         => 'required|integer|min:1',
-            'harga'            => 'required|string',
+            'id_barang'        => 'nullable|exists:warehouse,id',
+            'quantity'         => 'nullable|integer|min:1',
+            'harga'            => 'nullable|string',
 
-            'judul_cetak'      => 'required|string|max:255',
-            'ukuran'           => 'required|string|max:255',
-            'jumlah_box'       => 'required|integer|min:1',
-            'jumlah_ply'       => 'required|integer|min:1',
-            'perbox'           => 'required|integer|min:1',
-            'perporasi'        => 'required|string|max:255',
-            'cabang'           => 'required|string',
+            'judul_cetak'      => 'nullable|string|max:255',
+            'ukuran'           => 'nullable|string|max:255',
+            'jumlah_box'       => 'nullable|integer|min:1',
+            'jumlah_ply'       => 'nullable|integer|min:1',
+            'perbox'           => 'nullable|integer|min:1',
+            'perporasi'        => 'nullable|string|max:255',
+            'cabang'           => 'nullable|string',
 
             'keterangan'       => 'nullable|string',
         ]);
