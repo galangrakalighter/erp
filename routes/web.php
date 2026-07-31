@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\RequestPlat;
 use App\Models\SPKWarehouse;
 use App\Models\SPKFinance;
+use App\Models\SPKManufacture;
 use App\Models\SPKProduction;
 Route::get('/', function () {
     return view('login');
@@ -43,7 +44,7 @@ Route::post('/gudang/request/{id}/approve', [WarehouseController::class, 'approv
 Route::post('/gudang/request/{id}/reject', [WarehouseController::class, 'rejectQuotation'])->name('gudang.rejectQuotation');
 Route::get('/gudang/request', [WarehouseController::class, 'request'])->name('gudang.requests');
 Route::get('/spk', [WarehouseController::class, 'spk'])->name('gudang.spk');
-Route::get('/spk-manufacture', [WarehouseController::class, 'spkManufacture'])->name('gudang.manufacture');
+Route::get('/spk-manufacture', [WarehouseController::class, 'spkManufacture'])->name('manufacture.spk');
 Route::get('/gudang/spk/{spk}/pdf', [SpkController::class, 'pdf'])->middleware('auth');
 Route::get('/production/spk/{spk}/pdf', [SpkController::class, 'pdfProduction'])->middleware('auth');
 Route::get('/finance/spk/{spk}/pdf', [SpkController::class, 'pdfFinance'])->middleware('auth');
@@ -53,6 +54,7 @@ Route::post('/api/gudang/spk/{spk}/accept', [SpkController::class,'accept'])->mi
 Route::post('/api/gudang/bahan/{spk}/send', [QuotationController::class,'send'])->middleware('auth');
 Route::post('/api/finance/spk/{spk}/accept', [SpkController::class,'acceptFinance'])->middleware('auth');
 Route::post('/gudang/spk/{spk}/cancel', [SpkController::class,'cancel'])->middleware('auth');
+Route::post('/api/manufacture/spk/{spk}/accept', [SpkController::class,'acceptManufacture'])->middleware('auth');
 Route::post('/api/production/spk/{spk}/accept', [SpkController::class,'acceptProduction'])->middleware('auth');
 Route::post('/api/production/spk/{spk}/send', [SpkController::class,'sendSPK'])->middleware('auth');
 Route::post('/api/production/spk/{spk}/cancel', [SpkController::class,'cancelProduction'])->middleware('auth');
@@ -200,6 +202,17 @@ Route::get('/api/gudang/spk-all', function () {
             'quotation.barang',
         ])
         ->select('*', 'spk_finance.status as status_spk')
+        ->where('cabang', $user->cabang)
+        ->latest()
+        ->get();
+    }
+
+    if ($user->role == 'manufacture') {
+
+        return SPKManufacture::with([
+            'quotation.barang',
+        ])
+        ->select('*', 'spk_manufacture.status as status_spk')
         ->where('cabang', $user->cabang)
         ->latest()
         ->get();

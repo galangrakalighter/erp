@@ -19,3 +19,4 @@ Route::post('/production/spk/{id}', [SPKController::class, 'sendProduction']);
 Route::get('/users/production', [UserController::class, 'getUserProduction']);
 Route::get('/finance/spk-detail/{id}', [FinanceController::class, 'getDataINV']);
 Route::post('/finance/payment/{id}', [FinanceController::class, 'payment']);
+Route::post('/spk-manufacture/laporan/{id}', [SPKController::class, 'sendLaporan']);

@@ -4,19 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class SPKManufacture extends Model
+class laporanManufacture extends Model
 {
-    protected $table = 'spk_manufacture';
+    protected $table = 'laporan_manufacture';
 
     protected $fillable = [
         'quotation_id',
-        'spk_number',
-        'type',
-        'status',
-        'cabang',
-        'catatan',
-        'warehouse',
-        'production'
+        'hasil_jadi',
+        'waste',
     ];
 
     public function quotation()

@@ -316,7 +316,6 @@ function renderAction(q, index) {
 
     if(role == 'penjualan'){
         if(q.status == 6){
-            console.log(q);
             return `
             ${
                 q.spk_warehouse == null
@@ -357,6 +356,7 @@ function renderAction(q, index) {
             }
             `
         }else if(q.status == 7){
+            console.log(q);
             return `
                 ${
                     q.spk_warehouse == null
@@ -383,7 +383,7 @@ function renderAction(q, index) {
                     SPK Finance
                 </button>
                 ${
-                    q.spk_finance != null
+                    q.spk_finance != null && q.laporan != null
                     ?
                     `
                     <button

@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Quotation;
 use App\Models\SPKWarehouse;
+use App\Models\SPKManufacture;
 use App\Models\RequestPlat;
+use Illuminate\Support\Str;
 use App\Models\Warehouse;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -48,7 +50,8 @@ class QuotationController extends Controller
             'barang',
             'requestPlat',
             'spkWarehouse',
-            'spkFinance'
+            'spkFinance',
+            'laporan'
         ]);
 
         if ($cabang != 'Pusat') {
@@ -355,7 +358,37 @@ class QuotationController extends Controller
     }
 
     public function send(SPKWarehouse $spk){
-        // $bahan = SPKManufacture
+        $quotationId = $spk->quotation_id ?? optional($spk->warehouse)->quotation_id;
+
+        $manufacture = SPKManufacture::where('quotation_id', $quotationId)->first();
+        if($manufacture == null){
+            $spkBaru = SPKManufacture::create([
+                'quotation_id' => $quotationId,
+                'spk_number' => 
+                    'SPK-MAN-' 
+                    . now()->format('Ymd')
+                    . '-'
+                    . strtoupper(Str::random(5)),
+                'status' => 0,
+                'warehouse' => true,
+    
+                'cabang' => $spk->cabang,
+    
+            ]);            
+        }else{
+            $spkBaru = SPKManufacture::find($manufacture->id);
+            $spkBaru->update([
+                'warehouse' => true
+            ]);
+        }
+    
+        return response()->json([
+
+            'message' => 'SPK berhasil dikirim ke Manufacture.',
+
+            'data' => $spkBaru
+
+        ]);
     }
 
     public function sendQuotation($id){

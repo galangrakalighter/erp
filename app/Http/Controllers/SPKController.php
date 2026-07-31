@@ -6,6 +6,7 @@ use App\Models\Quotation;
 use App\Models\SPKWarehouse;
 use App\Models\SPKProduction;
 use App\Models\SPKManufacture;
+use App\Models\laporanManufacture;
 use App\Models\SPKFinance;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -21,8 +22,6 @@ class SPKController extends Controller
             'requestPlat'
         ])
         ->findOrFail($id);
-
-        dd($quotation);
 
         return view('spk.warehouse',compact('quotation'));
 
@@ -105,6 +104,35 @@ class SPKController extends Controller
         ]);
     }
 
+    public function sendLaporan(Request $request, $id)
+    {
+        // Validasi input
+        $request->validate([
+            'barang_jadi' => 'nullable|string',
+            'waste' => 'nullable|string',
+        ]);
+
+        // Cari data SPK berdasarkan ID
+        // Sesuaikan nama model (misal: SPKProduction atau SPKManufacture)
+        $spk = SPKManufacture::findOrFail($id);
+
+        $spk->update([
+            'status' => 2
+        ]);
+
+        $laporan = laporanManufacture::create([
+            'quotation_id' => $spk->quotation_id,
+            'hasil_jadi' => $request->barang_jadi,
+            'waste' => $request->waste,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Laporan berhasil disimpan!',
+            'data' => $laporan
+        ]);
+    }
+
     public function sendSPK(SPKProduction $spk){
         $quotationId = $spk->quotation_id ?? optional($spk->warehouse)->quotation_id;
 
@@ -118,7 +146,7 @@ class SPKController extends Controller
                     . '-'
                     . strtoupper(Str::random(5)),
                 'status' => 0,
-                'warehouse' => true,
+                'production' => true,
     
                 'cabang' => $spk->cabang,
     
@@ -126,7 +154,7 @@ class SPKController extends Controller
         }else{
             $spkBaru = SPKManufacture::find($manufacture->id);
             $spkBaru->update([
-                'warehouse' => true
+                'production' => true
             ]);
         }
     
@@ -333,6 +361,25 @@ class SPKController extends Controller
     }
 
     public function acceptProduction(SPKProduction $spk)
+    {
+        if ($spk->status != 0) {
+
+            return response()->json([
+                'message' => 'SPK sudah diproses.'
+            ], 422);
+
+        }
+
+        $spk->update([
+            'status' => 1
+        ]);
+
+        return response()->json([
+            'message' => 'SPK berhasil diterima.'
+        ]);
+    }
+
+    public function acceptManufacture(SPKManufacture $spk)
     {
         if ($spk->status != 0) {
 

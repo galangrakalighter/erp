@@ -48,6 +48,11 @@ class Quotation extends Model
     {
         return $this->belongsTo(Warehouse::class, 'id_barang');
     }
+
+    public function laporan()
+    {
+        return $this->hasOne(laporanManufacture::class, 'quotation_id');
+    }
     
     public function requestPlat()
     {
