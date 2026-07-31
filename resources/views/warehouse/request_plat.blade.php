@@ -423,6 +423,8 @@ function openApproveModal(id){
 
         const catatan=document.getElementById('catatan').value;
 
+        console.log(id);
+
         if(lokasi===""){
 
             alert("Lokasi plat wajib diisi.");

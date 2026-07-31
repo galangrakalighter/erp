@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Quotation;
+use App\Models\SPKWarehouse;
 use App\Models\RequestPlat;
 use App\Models\Warehouse;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Events\RequestPlatUpdated;
+use Barryvdh\DomPDF\Facade\Pdf;
 class QuotationController extends Controller
 {
     /**
@@ -20,36 +23,41 @@ class QuotationController extends Controller
         $cabang = Auth::user()->cabang;
         if($cabang == 'Pusat'){
             $inventories = Warehouse::all(); 
+            $sales = User::all();
         }else{
             // Mengambil data inventori untuk pilihan di dropdown modal
             $inventories = Warehouse::where('cabang', $cabang)->get();    
+            $sales = User::where('cabang', Auth::user()->cabang)->where('role', 'sales')->get();
         }
 
-        return view('quotations', compact('inventories', 'cabang'));
+        return view('quotations_new', compact('inventories', 'cabang', 'sales'));
+    }
+
+    public function PDF($id){
+        $po = Quotation::find($id);
+
+        $pdf = Pdf::loadView('pdf.penawaran', compact('po'))->setPaper('A4', 'portrait');
+
+        return $pdf->stream($po->quotation_number . '.pdf');
     }
 
     public function getDataQuotation($cabang)
     {
-
         $query = Quotation::with([
-            'items.inventory',
+            'sales',
+            'barang',
             'requestPlat',
-            'spkWarehouse'
+            'spkWarehouse',
+            'spkFinance'
         ]);
 
-
         if ($cabang != 'Pusat') {
-
             $query->where('cabang', $cabang);
-
         }
-
 
         $quotations = $query->get();
 
-
         return response()->json($quotations);
-
     }
 
     public function getInventories($cabang)
@@ -68,7 +76,7 @@ class QuotationController extends Controller
         $quotation = Quotation::findOrFail($request->plat_id);
 
         $quotation->update([
-            'status' => 2
+            'status' => 5
         ]);
 
         $requestPlat = RequestPlat::create([
@@ -90,7 +98,7 @@ class QuotationController extends Controller
         $quotation = Quotation::findOrFail($request->plat_id);
 
         $quotation->update([
-            'status' => 1
+            'status' => 4
         ]);
 
         RequestPlat::where('quotation_id', $quotation->id)->delete();
@@ -184,45 +192,71 @@ class QuotationController extends Controller
      */
     public function store(Request $request)
     {
-        // 1. Validasi input
+        // 1. Validasi input form modal
         $request->validate([
-            'nama_customer' => 'required|string|max:255',
-            'valid_until'   => 'required|date',
-            'items'         => 'required|array|min:1',
-            'items.*.inventory_id' => 'required|exists:warehouse,id',
-            'items.*.quantity'     => 'required|integer|min:1',
-            'items.*.unit_price'   => 'required|numeric|min:0',
+            'nama_pemesan'      => 'required|string|max:255',
+            'alamat_pemesan'    => 'required|string',
+            'nama_tempat'       => 'required|string|max:255', // Sebagai penerima
+            'alamat_tempat'     => 'required|string',       // Sebagai alamat_penerima
+            'tanggal_pesan'     => 'required|date',
+            'tipe_pemesanan'    => 'required|string',
+            'jenis_kertas'      => 'required|exists:warehouse,id', // id_barang
+            'jumlah_beli'       => 'required|integer|min:1',       // quantity
+            'harga_per_box'     => 'required|string',              // harga (format rupiah string)
+            'judul_cetak'       => 'required|string|max:255',
+            'ukuran'            => 'required|string|max:255',
+            'jumlah_box'        => 'required|integer|min:1',
+            'jumlah_ply'        => 'required|integer|min:1',
+            'isi_per_box'       => 'required|integer|min:1',       // perbox
+            'perporasi'         => 'required|string|max:255',
+            'cabang'            => 'required|string',
         ]);
 
         DB::transaction(function () use ($request) {
-            // 2. Hitung total amount dari semua item
-            $totalAmount = 0;
-            foreach ($request->items as $item) {
-                $totalAmount += ($item['quantity'] * $item['unit_price']);
+            // Membersihkan format harga dari string rupiah (misal: "Rp 150.000" jadi angka 150000)
+            $hargaBersih = str_replace(['Rp', '.', ' '], '', $request->harga_per_box);
+            $hargaBersih = (float) $hargaBersih;
+
+            // Hitung total amount (jumlah_box * harga_per_box atau sesuai kebutuhan bisnis Anda)
+            $totalAmount = $request->jumlah_box * $hargaBersih;
+
+            // Mengambil ID Sales jika yang login adalah admin/bukan sales, atau ambil dari user login jika sales
+            $idSales = null;
+            if (Auth::user()->role === 'sales') {
+                $idSales = Auth::id();
+            } else {
+                // Jika admin memilih dari dropdown, cari user berdasarkan nama
+                $salesUser = User::find($request->salesman);
+                $idSales = $salesUser ? $salesUser->id : null;
             }
 
-            // 3. Simpan Header Quotation
-            $quotation = Quotation::create([
-                'quotation_number'     => 'Q-' . date('Ymd') . '-' . strtoupper(uniqid()),
-                'nama_customer'        => $request->nama_customer,
-                'valid_until'          => $request->valid_until,
+            // 2. Simpan Data Quotation
+            Quotation::create([
+                'quotation_number'     => 'Q-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -5)),
+                'nama_customer'        => $request->nama_pemesan,
+                'alamat_customer'      => $request->alamat_pemesan,
+                'penerima'             => $request->nama_tempat,
+                'alamat_penerima'      => $request->alamat_tempat,
+                'id_sales'             => $idSales,
+                'tanggal_pesan'        => $request->tanggal_pesan,
+                'tipe_pemesanan'       => $request->tipe_pemesanan,
+                'judul_cetak'          => $request->judul_cetak,
+                'perbox'               => $request->isi_per_box,
+                'ukuran'               => $request->ukuran,
+                'perporasi'            => $request->perporasi,
+                'jumlah_box'           => $request->jumlah_box,
+                'jumlah_ply'           => $request->jumlah_ply,
+                'keterangan'           => $request->keterangan,
+                'id_barang'            => $request->jenis_kertas,
+                'quantity'             => $request->jumlah_beli,
                 'total_amount'         => $totalAmount,
-                'cabang'               => Auth::user()->cabang,
-                'status'               => 0
+                'cabang'               => $request->cabang,
+                'status'               => 0, // atau 0 sesuai struktur Anda
+                'harga'                => $hargaBersih
             ]);
-
-            // 4. Simpan Item Quotation
-            foreach ($request->items as $item) {
-                $quotation->items()->create([
-                    'warehouse_id' => $item['inventory_id'],
-                    'quantity'     => $item['quantity'],
-                    'unit_price'   => $item['unit_price'],
-                    'subtotal'     => $item['quantity'] * $item['unit_price'],
-                ]);
-            }
         });
 
-        return redirect()->back()->with('success', 'Quotation berhasil dibuat!');
+        return redirect()->back()->with('success', 'Purchase Order / Quotation berhasil disimpan!');
     }
 
     /**
@@ -247,12 +281,26 @@ class QuotationController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'nama_customer' => 'required|string|max:255',
-            'valid_until'   => 'required|date',
-            'items'         => 'required|array|min:1',
-            'items.*.inventory_id' => 'required|exists:warehouse,id',
-            'items.*.quantity'     => 'required|integer|min:1',
-            'items.*.unit_price'   => 'required|numeric|min:0',
+            'nama_customer'    => 'required|string|max:255',
+            'alamat_customer'  => 'required|string',
+            'penerima'         => 'required|string|max:255',
+            'alamat_penerima'  => 'required|string',
+            'tanggal_pesan'    => 'required|date',
+            'tipe_pemesanan'   => 'required|string',
+
+            'id_barang'        => 'required|exists:warehouse,id',
+            'quantity'         => 'required|integer|min:1',
+            'harga'            => 'required|string',
+
+            'judul_cetak'      => 'required|string|max:255',
+            'ukuran'           => 'required|string|max:255',
+            'jumlah_box'       => 'required|integer|min:1',
+            'jumlah_ply'       => 'required|integer|min:1',
+            'perbox'           => 'required|integer|min:1',
+            'perporasi'        => 'required|string|max:255',
+            'cabang'           => 'required|string',
+
+            'keterangan'       => 'nullable|string',
         ]);
 
         DB::transaction(function () use ($request, $id) {
@@ -261,33 +309,162 @@ class QuotationController extends Controller
                 ->where('cabang', Auth::user()->cabang)
                 ->firstOrFail();
 
+            // Membersihkan format harga
+            // Contoh: "Rp 150.000" menjadi 150000
+            $hargaBersih = str_replace(
+                ['Rp', '.', ' '],
+                '',
+                $request->harga
+            );
+
+            $hargaBersih = (float) $hargaBersih;
+
             // Hitung total
-            $totalAmount = collect($request->items)->sum(function ($item) {
-                return $item['quantity'] * $item['unit_price'];
-            });
+            $totalAmount = $request->jumlah_box * $hargaBersih;
 
-            // Update header quotation
+            // Update quotation
             $quotation->update([
-                'nama_customer' => $request->nama_customer,
-                'valid_until'   => $request->valid_until,
-                'total_amount'  => $totalAmount,
+                'nama_customer'   => $request->nama_customer,
+                'alamat_customer' => $request->alamat_customer,
+
+                'penerima'        => $request->penerima,
+                'alamat_penerima' => $request->alamat_penerima,
+
+                'tanggal_pesan'   => $request->tanggal_pesan,
+                'tipe_pemesanan'  => $request->tipe_pemesanan,
+
+                'id_barang'       => $request->id_barang,
+                'quantity'        => $request->quantity,
+
+                'harga'           => $hargaBersih,
+                'total_amount'    => $totalAmount,
+
+                'judul_cetak'     => $request->judul_cetak,
+                'ukuran'          => $request->ukuran,
+                'jumlah_box'      => $request->jumlah_box,
+                'jumlah_ply'      => $request->jumlah_ply,
+                'perbox'          => $request->perbox,
+                'perporasi'       => $request->perporasi,
+
+                'keterangan'      => $request->keterangan,
+                'cabang'          => $request->cabang,
             ]);
-
-            // Hapus semua item lama
-            $quotation->items()->delete();
-
-            // Simpan ulang item
-            foreach ($request->items as $item) {
-                $quotation->items()->create([
-                    'warehouse_id' => $item['inventory_id'],
-                    'quantity'     => $item['quantity'],
-                    'unit_price'   => $item['unit_price'],
-                    'subtotal'     => $item['quantity'] * $item['unit_price'],
-                ]);
-            }
         });
 
         return redirect()->back()->with('success', 'Quotation berhasil diperbarui.');
+    }
+
+    public function send(SPKWarehouse $spk){
+        // $bahan = SPKManufacture
+    }
+
+    public function sendQuotation($id){
+        $quotation = Quotation::find($id);
+
+        $quotation->update([
+            'status' => 1
+        ]);
+
+        return redirect()->back()->with('success', 'Quotation berhasil dikirim.');
+    }
+
+    public function rejectQuotation(Request $request, $id)
+    {
+        $request->validate([
+            'keterangan_reject' => 'nullable|string',
+        ]);
+
+        $quotation = Quotation::where('id', $id)
+            ->where('cabang', Auth::user()->cabang)
+            ->firstOrFail();
+
+        $quotation->update([
+            'status' => 2,
+            'keterangan_reject' => $request->keterangan_reject,
+        ]);
+
+        return redirect()->back()->with('success', 'Quotation berhasil ditolak.');
+    }
+
+    public function generateFilm($id)
+    {
+        try {
+            // 1. Ambil data quotation beserta relasi customer jika ada
+            $quotation = Quotation::findOrFail($id);
+
+            // 2. Rangkai Format Nomor Film: DMC / MMYY / CUST / Judul / Ukuran
+            $mmyy = now()->format('mmyy'); // Contoh: 0626
+            $cust = $quotation->nama_customer ?? 'CUST'; // Ambil kode customer
+            $judul = preg_replace('/[^A-Za-z0-9]/', '', $quotation->judul_pekerjaan); // Bersihkan spasi/simbol pada judul
+            $ukuran = $quotation->ukuran ?? 'Std'; // Ukuran cetak
+
+            $kodeMasterFilm = "DMC/{$mmyy}/${cust}/{$judul}/{$ukuran}";
+
+            // 3. Simpan ke database Master Film
+            $quotation->update([
+                'film' => $kodeMasterFilm
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Nomor film berhasil digenerate!',
+                'data' => $quotation
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal generate film: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteFilm($id)
+    {
+        try {
+            $quotation = Quotation::findOrFail($id);
+
+            // Kosongkan kolom film (set menjadi null)
+            $quotation->update([
+                'film' => null
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Nomor film berhasil dihapus!',
+                'data' => $quotation
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus film: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function approveQuotation(Request $request, $id)
+    {
+        $request->validate([
+            'keterangan_reject' => 'nullable|string',
+        ]);
+
+        $quotation = Quotation::where('id', $id)
+            ->where('cabang', Auth::user()->cabang)
+            ->firstOrFail();
+        
+        if(Auth::user()->role == 'pricing'){
+            $quotation->update([
+                'status' => 3,
+            ]);
+        }else{    
+            $quotation->update([
+                'status' => 4,
+            ]);
+        }
+
+
+        return redirect()->back()->with('success', 'Quotation berhasil di Approve.');
     }
 
     /**

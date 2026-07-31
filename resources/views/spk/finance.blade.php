@@ -70,6 +70,12 @@
 
         }
 
+        .right{
+
+            text-align:right;
+
+        }
+
         .signature{
 
             margin-top:60px;
@@ -103,7 +109,7 @@
     </div>
 
     <div class="subtitle">
-        WAREHOUSE
+        FINANCE
     </div>
 
     <table class="info">
@@ -133,9 +139,13 @@
 
                 <th width="40">No</th>
 
-                <th>Jenis Kertas</th>
+                <th>Jenis Kertas / Barang</th>
 
-                <th width="90">Jumlah</th>
+                <th width="70">Jumlah</th>
+
+                <th width="110">Harga Perbox</th>
+
+                <th width="110">Total Harga</th>
 
             </tr>
 
@@ -149,7 +159,7 @@
                     1
                 </td>
 
-                <td class="center">
+                <td>
                     {{ $spk->quotation->barang->barang }}
                 </td>
 
@@ -157,9 +167,26 @@
                     {{ $spk->quotation->quantity }}
                 </td>
 
+                <td class="right">
+                    Rp {{ number_format($spk->quotation->harga ?? $spk->quotation->price ?? 0, 0, ',', '.') }}
+                </td>
+
+                <td class="right">
+                    Rp {{ number_format($spk->quotation->total_harga ?? (($spk->quotation->harga ?? $spk->quotation->price ?? 0) * $spk->quotation->quantity), 0, ',', '.') }}
+                </td>
+
             </tr>
 
         </tbody>
+
+        <tfoot>
+            <tr>
+                <td colspan="4" class="right" style="padding: 8px; border: 1px solid #000; font-weight: bold;">Grand Total :</td>
+                <td class="right" style="padding: 8px; border: 1px solid #000; font-weight: bold;">
+                    Rp {{ number_format($spk->quotation->total_harga ?? (($spk->quotation->harga ?? $spk->quotation->price ?? 0) * $spk->quotation->quantity), 0, ',', '.') }}
+                </td>
+            </tr>
+        </tfoot>
 
     </table>
 
@@ -174,7 +201,7 @@
             padding:10px;
         ">
 
-            {{ $spk->note }}
+            {{ $spk->catatan ?? $spk->note }}
 
         </div>
 
@@ -196,7 +223,7 @@
 
             <td>
 
-                Diterima Gudang
+                Diterima Finance
 
                 <br><br><br><br>
 

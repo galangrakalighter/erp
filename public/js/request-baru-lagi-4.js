@@ -117,6 +117,9 @@ function renderQuotationTable() {
                 </td>
 
                 <td class="px-6 py-4">
+                    ${q.keterangan_reject ? q.keterangan_reject : ''}
+                </td>
+                <td class="px-6 py-4">
                     Rp ${Number(q.total_amount).toLocaleString('id-ID')}
                 </td>
 
@@ -130,12 +133,32 @@ function renderQuotationTable() {
 
 }
 
+function openKirimModal(id, quotationNumber) {
+    const modal = document.getElementById('modal-kirim');
+    const form = document.getElementById('form-kirim');
+    const textSpan = document.getElementById('quotation-number-text');
+
+    // Ubah action form sesuai dengan ID quotation, contoh: /quotations/{id}/kirim
+    form.action = `/quotations/${id}/kirim`;
+    
+    // Tampilkan nomor quotation pada teks konfirmasi
+    textSpan.textContent = quotationNumber;
+
+    // Tampilkan modal
+    modal.classList.remove('hidden');
+}
+
+function closeKirimModal() {
+    const modal = document.getElementById('modal-kirim');
+    modal.classList.add('hidden');
+}
+
 function renderAction(q, index) {
     if (role === 'sales') {
-        if(q.status === 0){
+        if(q.status == 0){
             return `
                 <button
-                    onclick="openEditModal(quotations[${index}])"
+                    onclick="openModalEdit(quotations[${index}])"
                     class="text-blue-600 hover:text-blue-800">
                     Edit
                 </button>
@@ -145,18 +168,73 @@ function renderAction(q, index) {
                     class="text-red-600 hover:text-red-800">
                     Delete
                 </button>
+
+                <button
+                    onclick="openKirimModal(${q.id}, '${q.quotation_number}')"
+                    class="text-red-600 hover:text-red-800">
+                    Kirim
+                </button>
+
+                <a
+                    href="/quotations/${q.id}/pdf" 
+                    target="_blank"
+                    class="text-green-600 hover:text-green-800 inline-block">
+                    Buka Dokumen
+                </a>
+            `;
+        }else if(q.status == 1){
+            return `
+                <span class="text-gray-400 text-sm italic">
+                    Menunggu Approval
+                </span>
+                <a href="/quotations/${q.id}/pdf" 
+                    target="_blank"
+                    class="text-green-600 hover:text-green-800 inline-block">
+                    Buka Dokumen
+                </a>
+            `;
+        }else if(q.status == 2){
+            return `
+                <button
+                    onclick="openModalEdit(quotations[${index}])"
+                    class="text-blue-600 hover:text-blue-800">
+                    Edit
+                </button>
+    
+                <button
+                    onclick="openDeleteModal('/quotations/${q.id}')"
+                    class="text-red-600 hover:text-red-800">
+                    Delete
+                </button>
+
+                <button
+                    onclick="openKirimModal(${q.id}, '${q.quotation_number}')"
+                    class="text-red-600 hover:text-red-800">
+                    Kirim
+                </button>
+
+                <a href="/quotations/${q.id}/pdf" 
+                    target="_blank"
+                    class="text-green-600 hover:text-green-800 inline-block">
+                    Buka Dokumen
+                </a>
             `;
         }else{
             return `
                 <span class="text-gray-400 text-sm italic">
                     Sudah Di Approve
                 </span>
+                <a href="/quotations/${q.id}/pdf" 
+                    target="_blank"
+                    class="text-green-600 hover:text-green-800 inline-block">
+                    Buka Dokumen
+                </a>
             `;
         }
     }
 
     if (role === 'pricing'){
-        if(q.status === 0){
+        if(q.status == 1){
             return `
                 <button
                     onclick="openApproveModal(quotations[${index}])"
@@ -164,6 +242,12 @@ function renderAction(q, index) {
                     Detail
                 </button>
             `;
+        }else if(q.status == 2){
+            return `
+                <span class="text-gray-400 text-sm italic">
+                    Di Tolak
+                </span>
+            `;
         }else{
             return `
                 <span class="text-gray-400 text-sm italic">
@@ -173,7 +257,7 @@ function renderAction(q, index) {
         }
     }
 
-    if (role === 'penjualan') {
+    if (role === 'pracetak') {
 
         if (q.status == 0) {
             return `
@@ -185,6 +269,22 @@ function renderAction(q, index) {
 
         if (q.status == 1) {
             return `
+                <span class="text-gray-400 text-sm italic">
+                    Menunggu Approval
+                </span>
+            `;
+        }
+
+        if (q.status == 2) {
+            return `
+                <span class="text-gray-400 text-sm italic">
+                    Ditolak
+                </span>
+            `;
+        }
+
+        if (q.status == 4) {
+            return `
                 <button
                     onclick="requestPlat(${q.id})"
                     class="px-4 py-2 border-2 border-blue-600 text-blue-600 text-sm font-bold rounded-full hover:bg-blue-50 transition-all duration-200">
@@ -193,7 +293,7 @@ function renderAction(q, index) {
             `;
         }
 
-        if (q.status == 2) {
+        if (q.status == 5) {
             return `
                 <button
                     onclick="cancelPlat(${q.id})"
@@ -203,15 +303,61 @@ function renderAction(q, index) {
             `;
         }
 
-        if (q.status == 3) {
-
+        if (q.status == 6) {
             return `
                 <button
                     onclick="openPlatDetailModal(quotations[${index}])"
                     class="px-3 py-2 border border-green-600 text-green-600 rounded-lg hover:bg-green-50">
                     Detail Plat
                 </button>
+            `;
+        }
+    }
 
+    if(role == 'penjualan'){
+        if(q.status == 6){
+            console.log(q);
+            return `
+            ${
+                q.spk_warehouse == null
+                ?
+                `
+                <button
+                    onclick="openWarehouseModal(quotations[${index}])"
+                    class="px-3 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50">
+                    SPK Warehouse
+                </button>
+                `
+                :
+                `
+                <button
+                    onclick="openProductionModal(quotations[${index}])"
+                    class="px-3 py-2 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50">
+                    SPK Production
+                </button>
+                `
+            }
+            <button
+                onclick="openFinanceModal(quotations[${index}])"
+                class="px-3 py-2 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50">
+                SPK Finance
+            </button>
+            ${
+                q.spk_finance != null
+                ?
+                `
+                <button
+                    onclick="cetakSuratJalan(${q.spk_finance.id})"
+                    class="px-3 py-2 border border-green-600 text-green-600 rounded-lg hover:bg-green-50">
+                    Cetak Surat Jalan
+                </button>
+                `
+                :
+                ''
+            }
+            `
+        }else if(q.status == 7){
+            return `
                 ${
                     q.spk_warehouse == null
                     ?
@@ -231,6 +377,46 @@ function renderAction(q, index) {
                     </button>
                     `
                 }
+                <button
+                    onclick="openFinanceModal(quotations[${index}])"
+                    class="px-3 py-2 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50">
+                    SPK Finance
+                </button>
+                ${
+                    q.spk_finance != null
+                    ?
+                    `
+                    <button
+                        onclick="cetakSuratJalan(${q.spk_finance.id})"
+                        class="px-3 py-2 border border-green-600 text-green-600 rounded-lg hover:bg-green-50">
+                        Cetak Surat Jalan
+                    </button>
+                    `
+                    :
+                    ''
+                }
+            `;
+        }else if(q.status == 3){
+            return `
+                <form action="/quotations/${q.id}/approve" method="POST" class="inline">
+                    <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]').getAttribute('content')}">
+                    <input type="hidden" name="_method" value="PUT">
+                    <button type="submit" class="text-blue-600 hover:text-blue-800">
+                        Approve
+                    </button>
+                </form>
+            `;
+        }else if(q.status > 3){
+            return `
+                <span class="text-gray-400 text-sm italic">
+                    Sudah Approve
+                </span>
+            `;
+        }else{
+            return `
+                <span class="text-gray-400 text-sm italic">
+                    Tidak Ada Akses
+                </span>
             `;
         }
     }
@@ -240,6 +426,82 @@ function renderAction(q, index) {
             Tidak Ada Akses
         </span>
     `;
+}
+
+// async function deleteFilm(id) {
+//     try {
+//         const response = await fetch(`/quotations/${id}/delete-film`, {
+//             method: 'POST',
+//             headers: {
+//                 'Content-Type': 'application/json',
+//                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+//                 'Accept': 'application/json'
+//             },
+//             credentials: 'same-origin',
+//             body: JSON.stringify({
+//                 timestamp: new Date().toISOString()
+//             })
+//         });
+
+//         const data = await response.json();
+
+//         if (!response.ok) {
+//             throw new Error(data.message || `Gagal menghapus film: ${response.statusText}`);
+//         }
+
+//         // Menampilkan notifikasi sukses (sesuaikan dengan fungsi showNotification Anda)
+//         showNotification("Berhasil Menghapus Nomor Film");
+        
+//         // Refresh tabel
+//         await loadQuotations(); // atau location.reload();
+//     } catch (error) {
+//         console.error('Error saat deleteFilm:', error);
+//         alert(error.message);
+//         throw error;
+//     }
+// }
+
+// async function generateFilm(id) {
+//     try {
+//         const response = await fetch(`/quotations/${id}/generate-film`, {
+//             method: 'POST',
+//             headers: {
+//                 'Content-Type': 'application/json',
+//                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+//                 'Accept': 'application/json'
+//             },
+//             credentials: 'same-origin',
+//             body: JSON.stringify({
+//                 timestamp: new Date().toISOString()
+//             })
+//         });
+
+//         const data = await response.json();
+
+//         if (!response.ok) {
+//             throw new Error(data.message || `Gagal generate film: ${response.statusText}`);
+//         }
+
+//         // Menampilkan notifikasi sukses (sesuaikan fungsi showNotification dengan yang Anda punya)
+//         showNotification("Berhasil Generate No Film: " + data.data.film);
+        
+//         // Refresh tabel / reload halaman
+//         location.reload(); 
+//     } catch (error) {
+//         console.error('Error saat generateFilm:', error);
+//         // Anda bisa mengganti alert ini dengan fungsi showNotification versi error jika ada
+//         alert(error.message); 
+//         throw error;
+//     }
+// }
+
+function cetakSuratJalan(id) {
+    if (!id) {
+        alert('ID SPK Finance tidak ditemukan.');
+        return;
+    }
+    // Mengarahkan ke route Laravel untuk download/stream PDF surat jalan
+    window.open(`/finance/surat-jalan-pdf/${id}`, '_blank');
 }
 
 function openWarehouseModal(q){
@@ -266,34 +528,31 @@ function openWarehouseModal(q){
                     <th class="px-3 py-2 text-center">
                         Jumlah
                     </th>
+                    <th class="px-3 py-2 text-center">
+                        Isi Per Box
+                    </th>
+                    <th class="px-3 py-2 text-center">
+                        Jumlah Box
+                    </th>
                 </tr>
             </thead>
             <tbody>
-    `;
-
-    q.items.forEach(item => {
-
-        html += `
-            <tr class="border-t">
-
-                <td class="px-3 py-2">
-
-                    <div class="font-medium">
-                        ${item.inventory?.barang ?? '-'}
-                    </div>
-
-                </td>
-
-                <td class="px-3 py-2 text-center">
-                    ${item.quantity}
-                </td>
-
-            </tr>
-        `;
-
-    });
-
-    html += `
+                <tr class="border-t">
+                    <td class="px-3 py-2">
+                        <div class="font-medium">
+                            ${q.barang?.barang ?? '-'}
+                        </div>
+                    </td>
+                    <td class="px-3 py-2 text-center">
+                        ${q.quantity ?? '-'}
+                    </td>
+                    <td class="px-3 py-2 text-center">
+                        ${q.perbox ?? '-'}
+                    </td>
+                    <td class="px-3 py-2 text-center">
+                        ${q.jumlah_box ?? '-'}
+                    </td>
+                </tr>
             </tbody>
         </table>
     `;
@@ -318,124 +577,142 @@ function closeWarehouseModal(){
 
 }
 
-function openProductionModal(spk){
-
+function openProductionModal(spk) {
 
     console.log(spk);
 
+    document.getElementById('productionWarehouseSpkId').value = spk.id;
 
-    document.getElementById(
-        'productionWarehouseSpkId'
-    ).value = spk.id;
+    document.getElementById('productionSpkNumber').innerText = 
+        spk.spk_warehouse?.spk_number ?? '-';
 
+    document.getElementById('productionCustomer').innerText = 
+        spk.nama_customer ?? '-';
 
+    document.getElementById('productionNote').value = '';
 
-    document.getElementById(
-        'productionSpkNumber'
-    ).innerText = spk.spk_warehouse.spk_number;
-
-
-
-    document.getElementById(
-        'productionCustomer'
-    ).innerText =
-        spk.nama_customer;
-
-
-
-    document.getElementById(
-        'productionNote'
-    ).value='';
-
-
-
-    let html=`
-
-    <table class="w-full text-sm">
-
-        <thead class="bg-gray-100">
-
-            <tr>
-
-                <th class="px-3 py-2 text-left">
-                    Barang
-                </th>
-
-
-                <th class="px-3 py-2 text-center">
-                    Qty
-                </th>
-
-            </tr>
-
-        </thead>
-
-        <tbody>
-
+    let html = `
+        <table class="w-full text-sm">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-3 py-2 text-left">
+                        Barang
+                    </th>
+                    <th class="px-3 py-2 text-center">
+                        Jumlah
+                    </th>
+                    <th class="px-3 py-2 text-center">
+                        Satuan
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="border-t">
+                    <td class="px-3 py-2">
+                        <div class="font-medium">
+                            ${spk.barang?.barang ?? '-'}
+                        </div>
+                    </td>
+                    <td class="px-3 py-2 text-center">
+                        ${spk.barang?.jumlah ?? '-'}
+                    </td>
+                    <td class="px-3 py-2 text-center">
+                        ${spk.barang?.satuan ?? '-'}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     `;
 
-
-
-    spk.items.forEach(item=>{
-
-
-        html+=`
-
-        <tr class="border-t">
-
-
-            <td class="px-3 py-2">
-
-                ${item.inventory?.barang ?? '-'}
-
-            </td>
-
-
-            <td class="px-3 py-2 text-center">
-
-                ${item.quantity}
-
-            </td>
-
-
-        </tr>
-
-        `;
-
-
-    });
-
-
-
-    html+=`
-
-        </tbody>
-
-    </table>
-
-    `;
-
-
-
-    document.getElementById(
-        'productionItems'
-    ).innerHTML=html;
-
-
+    document.getElementById('productionItems').innerHTML = html;
 
     loadProductionPIC();
 
+    document
+        .getElementById('productionModal')
+        .classList.remove('hidden');
 
+    document
+        .getElementById('productionModal')
+        .classList.add('flex');
+}
 
-    const modal=document.getElementById(
-        'productionModal'
-    );
+function openFinanceModal(q) {
+    console.log(q);
 
+    document.getElementById('financeQuotationId').value = q.id;
 
-    modal.classList.remove('hidden');
+    document.getElementById('financeQuotationNumber').innerText =
+        q.quotation_number;
 
-    modal.classList.add('flex');
+    document.getElementById('financeCustomer').innerText =
+        q.nama_customer;
 
+    document.getElementById('financeNote').value = '';
+
+    // Helper untuk format rupiah (sesuaikan jika di backend sudah diformat)
+    const formatRupiah = (angka) => {
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
+    };
+
+    // Asumsi properti harga satuan ada di q.harga atau q.price, dan total harga di q.total_harga / q.total
+    const hargaPerbox = q.harga ?? q.price ?? 0;
+    const jumlah = q.quantity ?? 0;
+    const totalHarga = q.total_harga ?? (hargaPerbox * jumlah);
+
+    let html = `
+        <table class="w-full text-sm">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-3 py-2 text-left">Barang</th>
+                    <th class="px-3 py-2 text-center">Jumlah</th>
+                    <th class="px-3 py-2 text-right">Harga Perbox</th>
+                    <th class="px-3 py-2 text-right">Total Harga</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="border-t">
+                    <td class="px-3 py-2">
+                        <div class="font-medium">
+                            ${q.barang?.barang ?? '-'}
+                        </div>
+                    </td>
+                    <td class="px-3 py-2 text-center">
+                        ${jumlah}
+                    </td>
+                    <td class="px-3 py-2 text-right">
+                        ${formatRupiah(hargaPerbox)}
+                    </td>
+                    <td class="px-3 py-2 text-right font-semibold">
+                        ${formatRupiah(totalHarga)}
+                    </td>
+                </tr>
+            </tbody>
+            <tfoot class="bg-gray-50 border-t font-bold">
+                <tr>
+                    <td colspan="3" class="px-3 py-2 text-right">Grand Total:</td>
+                    <td class="px-3 py-2 text-right text-purple-600">
+                        ${formatRupiah(totalHarga)}
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    `;
+
+    document.getElementById('financeItems').innerHTML = html;
+
+    document
+        .getElementById('financeModal')
+        .classList.remove('hidden');
+
+    document
+        .getElementById('financeModal')
+        .classList.add('flex');
+}
+
+function closeFinanceModal() {
+    document.getElementById('financeModal').classList.remove('flex');
+    document.getElementById('financeModal').classList.add('hidden');
 }
 
 async function loadProductionPIC(){
@@ -616,6 +893,55 @@ async function sendSpkWarehouse(){
         loadQuotations();
 
         alert('SPK berhasil dikirim ke Warehouse.');
+
+    }catch(err){
+
+        alert(err.message);
+
+    }
+
+}
+
+async function sendSpkFinance(){
+
+    console.log("masuk sini");
+
+    const id = document.getElementById('financeQuotationId').value;
+
+    const note = document.getElementById('financeNote').value;
+
+    try{
+        let cabang = document.getElementById('cabang').value;
+        const response = await fetch(`/api/finance/spk/${id}`,{
+
+            method:'POST',
+            
+            headers:{
+                'Content-Type':'application/json',
+                'X-CSRF-TOKEN':document
+                    .querySelector('meta[name="csrf-token"]').content
+            },
+
+            body:JSON.stringify({
+                note: note,
+                cabang: cabang
+            })
+
+        });
+
+        const result = await response.json();
+
+        console.log(result);
+
+        if(!response.ok){
+            throw new Error(result.message);
+        }
+
+        closeFinanceModal();
+
+        loadQuotations();
+
+        alert('SPK berhasil dikirim ke Finance.');
 
     }catch(err){
 

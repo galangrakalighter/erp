@@ -101,6 +101,10 @@
     <td>Customer</td>
     <td>: {{ $spk->warehouse->quotation->nama_customer }}</td>
 </tr>
+<tr>
+    <td>No Film</td>
+    <td>: {{ $spk->warehouse->quotation->film }}</td>
+</tr>
 
 <tr>
     <td>PIC Production</td>
@@ -129,20 +133,18 @@
 
 <tbody>
 
-@foreach($spk->warehouse->quotation->items as $i => $item)
-
 <tr>
 
 <td class="center">
-{{ $i+1 }}
-</td>
-
-<td>
-{{ $item->inventory->barang }}
+1
 </td>
 
 <td class="center">
-{{ $item->quantity }}
+{{ $spk->warehouse->quotation->barang->barang }}
+</td>
+
+<td class="center">
+{{ $spk->warehouse->quotation->quantity }}
 </td>
 
 <td class="center">
@@ -158,8 +160,6 @@ Selesai
 </td>
 
 </tr>
-
-@endforeach
 
 </tbody>
 

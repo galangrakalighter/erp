@@ -38,6 +38,9 @@ class warehouseController extends Controller
     public function spk(){
         return view('warehouse.spk');
     }
+    public function spkManufacture(){
+        return view('manufacture.spk');
+    }
 
     public function approveQuotation(Request $request, $id){
         $request->validate([
@@ -47,9 +50,16 @@ class warehouseController extends Controller
 
         $plat = RequestPlat::findOrFail($id);
         $quotation = Quotation::find($plat->quotation_id);
+        $mmyy = now()->format('mmyy'); // Contoh: 0626
+        $cust = $quotation->nama_customer ?? 'CUST'; // Ambil kode customer
+        $judul = preg_replace('/[^A-Za-z0-9]/', '', $quotation->judul_pekerjaan); // Bersihkan spasi/simbol pada judul
+        $ukuran = $quotation->ukuran ?? 'Std'; // Ukuran cetak
+
+        $kodeMasterFilm = "(DMC/{$mmyy}/{$cust}/{$judul}{$ukuran})/{$request->lokasi_plat}";
 
         $quotation->update([
-            'status' => 3
+            'status' => 7,
+            'film' => $kodeMasterFilm
         ]);
 
         $plat->update([

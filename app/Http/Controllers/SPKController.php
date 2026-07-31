@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Quotation;
 use App\Models\SPKWarehouse;
 use App\Models\SPKProduction;
+use App\Models\SPKManufacture;
+use App\Models\SPKFinance;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str;
@@ -20,6 +22,7 @@ class SPKController extends Controller
         ])
         ->findOrFail($id);
 
+        dd($quotation);
 
         return view('spk.warehouse',compact('quotation'));
 
@@ -68,6 +71,71 @@ class SPKController extends Controller
         return response()->json([
             'message' => 'SPK berhasil dikirim ke Warehouse.',
             'data'    => $spk
+        ]);
+    }
+
+    public function sendFinance(Request $request, $id)
+    {
+        $request->validate([
+            'note' => 'nullable|string|max:1000',
+        ]);
+
+        $quotation = Quotation::findOrFail($id);
+
+        // Cek apakah SPK Finance sudah pernah dibuat
+        $exists = SPKFinance::where('quotation_id', $quotation->id)->exists();
+
+        if ($exists) {
+            return response()->json([
+                'message' => 'SPK Finance sudah pernah dibuat.'
+            ], 422);
+        }
+
+        $spk = SPKFinance::create([
+            'quotation_id' => $quotation->id,
+            'spk_number'   => 'SPK-FIN-' . now()->format('Ymd') . '-' . strtoupper(Str::random(5)),
+            'status'       => 0,
+            'cabang'       => $request->cabang,
+            'catatan'      => $request->note
+        ]);
+
+        return response()->json([
+            'message' => 'SPK berhasil dikirim ke Finance.',
+            'data'    => $spk
+        ]);
+    }
+
+    public function sendSPK(SPKProduction $spk){
+        $quotationId = $spk->quotation_id ?? optional($spk->warehouse)->quotation_id;
+
+        $manufacture = SPKManufacture::where('quotation_id', $quotationId)->first();
+        if($manufacture == null){
+            $spkBaru = SPKManufacture::create([
+                'quotation_id' => $quotationId,
+                'spk_number' => 
+                    'SPK-MAN-' 
+                    . now()->format('Ymd')
+                    . '-'
+                    . strtoupper(Str::random(5)),
+                'status' => 0,
+                'warehouse' => true,
+    
+                'cabang' => $spk->cabang,
+    
+            ]);            
+        }else{
+            $spkBaru = SPKManufacture::find($manufacture->id);
+            $spkBaru->update([
+                'warehouse' => true
+            ]);
+        }
+    
+        return response()->json([
+
+            'message' => 'SPK berhasil dikirim ke Manufacture.',
+
+            'data' => $spkBaru
+
         ]);
     }
 
@@ -141,7 +209,7 @@ class SPKController extends Controller
     public function pdf(SPKWarehouse $spk)
     {
         $spk->load([
-            'quotation.items.inventory'
+            'quotation.barang'
         ]);
 
         $pdf = Pdf::loadView('spk.warehouse', [
@@ -149,6 +217,47 @@ class SPKController extends Controller
         ]);
 
         return $pdf->stream($spk->spk_number . '.pdf');
+    }
+
+    public function pdfFinance(SPKFinance $spk)
+    {
+        $spk->load([
+            'quotation.barang'
+        ]);
+
+        $pdf = Pdf::loadView('spk.finance', [
+            'spk' => $spk
+        ]);
+
+        return $pdf->stream($spk->spk_number . '.pdf');
+    }
+
+    public function pdfInvoice(SPKFinance $spk){
+        $spk->load([
+            'quotation.barang'
+        ]);
+
+        $pdf = Pdf::loadView('pdf.invoice_pelanggan', [
+            'spk' => $spk
+        ]);
+
+        return $pdf->stream($spk->spk_number . '.pdf');
+    }
+
+    public function pdfSuratJalan(SPKFinance $spk)
+    {
+        // Load relasi yang dibutuhkan untuk surat jalan (seperti customer, barang, dsb)
+        $spk->load([
+        'quotation.barang'
+        ]);
+            
+        // Generate PDF menggunakan view khusus surat jalan
+        $pdf = Pdf::loadView('pdf.surat_jalan', [
+            'spk' => $spk
+        ]);
+
+        // Stream PDF di browser dengan nama file Surat-Jalan-[nomor].pdf
+        return $pdf->stream('Surat-Jalan-' . ($spk->no_invoice ?? $spk->spk_number) . '.pdf');
     }
 
     public function accept(SPKWarehouse $spk)
@@ -163,6 +272,26 @@ class SPKController extends Controller
 
         $spk->update([
             'status' => 1
+        ]);
+
+        return response()->json([
+            'message' => 'SPK berhasil diterima.'
+        ]);
+    }
+
+    public function acceptFinance(SPKFinance $spk)
+    {
+        if($spk->status != 0){
+
+            return response()->json([
+                'message' => 'SPK sudah diproses.'
+            ],422);
+
+        }
+
+        $spk->update([
+            'status' => 1,
+            'no_invoice' => 'INV-' . now()->format('Ymd') . '-' . strtoupper(Str::random(5))
         ]);
 
         return response()->json([
@@ -192,7 +321,7 @@ class SPKController extends Controller
     public function pdfProduction(SPKProduction $spk)
     {
         $spk->load([
-            'warehouse.quotation.items.inventory',
+            'warehouse.quotation.barang',
             'pic'
         ]);
 

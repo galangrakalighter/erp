@@ -156,6 +156,56 @@
                     </div>
 
                 </div>
+                @elseif(auth()->user()->role == 'akuntansi')
+                <div class="relative">
+
+                    <button id="spk-menu-btn"
+                        class="p-2 text-gray-500 hover:bg-gray-100 rounded-xl transition relative">
+
+                        <svg class="w-6 h-6"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24">
+
+                            <path stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+
+                        <span
+                            id="spk-badge"
+                            class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center">
+                            0
+                        </span>
+
+                    </button>
+
+                    <div id="spk-dropdown"
+                        class="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-100 py-2 hidden">
+
+                        <div class="px-4 py-2 border-b text-sm font-semibold">
+                            SPK Baru
+                        </div>
+
+                        <div id="spk-list" class="max-h-60 overflow-y-auto">
+
+                            <div class="p-4 text-center text-gray-400">
+                                Memuat...
+                            </div>
+
+                        </div>
+
+                        <div class="border-t px-4 py-2 text-center">
+                            <a href="{{ route('gudang.spk') }}"
+                                class="text-xs text-blue-600 hover:underline">
+                                Lihat Semua SPK
+                            </a>
+                        </div>
+
+                    </div>
+
+                </div>
                 @endif
                 <div class="relative">
                     <button id="user-menu-btn" class="flex items-center gap-3 hover:bg-gray-100 px-3 py-1.5 rounded-xl transition">
@@ -517,7 +567,6 @@
         // Format Rupiah
         // ==========================
         function formatRupiah(input) {
-
             let value = input.value.replace(/[^0-9]/g, '');
 
             if (value) {

@@ -12,6 +12,7 @@ use App\Http\Controllers\QuotationController;
 use Illuminate\Support\Facades\Auth;
 use App\Models\RequestPlat;
 use App\Models\SPKWarehouse;
+use App\Models\SPKFinance;
 use App\Models\SPKProduction;
 Route::get('/', function () {
     return view('login');
@@ -23,6 +24,12 @@ Route::get('/dashboard', [UserController::class, 'dashboard'])->name('dashboard'
 Route::get('/purchase-order/{id}/print', [PurchaseOrderController::class,'print'])->name('purchase-order.print');
 Route::post('/plat/request', [QuotationController::class, 'requestPlat'])->name('request_plat');
 Route::post('/plat/cancel', [QuotationController::class, 'cancelPlat'])->name('cancel_plat');
+Route::get('/quotations/{id}/pdf', [QuotationController::class,'PDF'])->name('quotation.pdf');
+Route::put('/quotations/{id}/kirim', [QuotationController::class,'sendQuotation'])->name('quotation.send');
+Route::put('/quotations/{id}/reject', [QuotationController::class,'rejectQuotation'])->name('quotation.reject');
+Route::put('/quotations/{id}/approve', [QuotationController::class,'approveQuotation'])->name('quotation.approve');
+Route::post('/quotations/{id}/generate-film', [QuotationController::class, 'generateFilm'])->name('films.generate');
+Route::post('/quotations/{id}/delete-film', [QuotationController::class, 'deleteFilm'])->name('films.delete');
 Route::get('/purchase-order/{id}/quotation', [PurchaseOrderController::class,'quotation'])->name('purchase-order.quotation');
 Route::get('/purchase-order/{id}/invoice', [PurchaseOrderController::class,'invoice'])->name('purchase-order.invoice');
 Route::get('/purchase-order/{id}/faktur', [PurchaseOrderController::class,'faktur'])->name('purchase-order.faktur');
@@ -36,11 +43,18 @@ Route::post('/gudang/request/{id}/approve', [WarehouseController::class, 'approv
 Route::post('/gudang/request/{id}/reject', [WarehouseController::class, 'rejectQuotation'])->name('gudang.rejectQuotation');
 Route::get('/gudang/request', [WarehouseController::class, 'request'])->name('gudang.requests');
 Route::get('/spk', [WarehouseController::class, 'spk'])->name('gudang.spk');
+Route::get('/spk-manufacture', [WarehouseController::class, 'spkManufacture'])->name('gudang.manufacture');
 Route::get('/gudang/spk/{spk}/pdf', [SpkController::class, 'pdf'])->middleware('auth');
 Route::get('/production/spk/{spk}/pdf', [SpkController::class, 'pdfProduction'])->middleware('auth');
+Route::get('/finance/spk/{spk}/pdf', [SpkController::class, 'pdfFinance'])->middleware('auth');
+Route::get('/invoice/spk/{spk}/pdf', [SpkController::class, 'pdfInvoice'])->middleware('auth');
+Route::get('/finance/surat-jalan-pdf/{spk}', [SpkController::class, 'pdfSuratJalan']);
 Route::post('/api/gudang/spk/{spk}/accept', [SpkController::class,'accept'])->middleware('auth');
+Route::post('/api/gudang/bahan/{spk}/send', [QuotationController::class,'send'])->middleware('auth');
+Route::post('/api/finance/spk/{spk}/accept', [SpkController::class,'acceptFinance'])->middleware('auth');
 Route::post('/gudang/spk/{spk}/cancel', [SpkController::class,'cancel'])->middleware('auth');
 Route::post('/api/production/spk/{spk}/accept', [SpkController::class,'acceptProduction'])->middleware('auth');
+Route::post('/api/production/spk/{spk}/send', [SpkController::class,'sendSPK'])->middleware('auth');
 Route::post('/api/production/spk/{spk}/cancel', [SpkController::class,'cancelProduction'])->middleware('auth');
 Route::resource('warehouse', warehouseController::class);
 Route::resource('users', UserController::class);
@@ -100,7 +114,7 @@ Route::get('/api/gudang/spk', function () {
     if($user->role == 'gudang'){
 
         return \App\Models\SPKWarehouse::with([
-            'quotation.items.inventory'
+            'quotation.barang'
         ])
         ->where('status',0)
         ->where('cabang',$user->cabang)
@@ -114,8 +128,32 @@ Route::get('/api/gudang/spk', function () {
     if($user->role == 'production'){
 
         return \App\Models\SPKProduction::with([
-            'warehouse.quotation.items.inventory',
+            'warehouse.quotation.barang',
             'pic'
+        ])
+        ->where('status',0)
+        ->where('cabang',$user->cabang)
+        ->latest()
+        ->get();
+
+    }
+
+    if($user->role == 'akuntansi'){
+
+        return \App\Models\SPKFinance::with([
+            'quotation.barang',
+        ])
+        ->where('status',0)
+        ->where('cabang',$user->cabang)
+        ->latest()
+        ->get();
+
+    }
+
+    if($user->role == 'manufacture'){
+
+        return \App\Models\SPKManufacture::with([
+            'quotation.barang',
         ])
         ->where('status',0)
         ->where('cabang',$user->cabang)
@@ -136,8 +174,9 @@ Route::get('/api/gudang/spk-all', function () {
     if ($user->role == 'gudang') {
 
         return SPKWarehouse::with([
-            'quotation.items.inventory'
+            'quotation.barang'
         ])
+        ->select('*', 'spk_warehouse.status as status_spk')
         ->where('cabang', $user->cabang)
         ->latest()
         ->get();
@@ -146,9 +185,21 @@ Route::get('/api/gudang/spk-all', function () {
     if ($user->role == 'production') {
 
         return SPKProduction::with([
-            'warehouse.quotation.items.inventory',
+            'warehouse.quotation.barang',
             'pic'
         ])
+        ->select('*', 'spk_production.status as status_spk')
+        ->where('cabang', $user->cabang)
+        ->latest()
+        ->get();
+    }
+
+    if ($user->role == 'akuntansi') {
+
+        return SPKFinance::with([
+            'quotation.barang',
+        ])
+        ->select('*', 'spk_finance.status as status_spk')
         ->where('cabang', $user->cabang)
         ->latest()
         ->get();
@@ -174,6 +225,14 @@ Route::get('/api/gudang/spk-count', function () {
 
 
         $count = \App\Models\SPKProduction::where('status',0)
+            ->where('cabang',$user->cabang)
+            ->count();
+
+    }
+    elseif($user->role == 'akuntansi'){
+
+
+        $count = \App\Models\SPKFinance::where('status',0)
             ->where('cabang',$user->cabang)
             ->count();
 
