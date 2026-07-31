@@ -288,8 +288,8 @@ class QuotationController extends Controller
             'tanggal_pesan'    => 'nullable|date',
             'tipe_pemesanan'   => 'nullable|string',
 
-            'id_barang'        => 'nullable|exists:warehouse,id',
-            'quantity'         => 'nullable|integer|min:1',
+            'jenis_kertas'        => 'nullable|exists:warehouse,id',
+            'jumlah_beli'         => 'nullable|integer|min:1',
             'harga'            => 'nullable|string',
 
             'judul_cetak'      => 'nullable|string|max:255',
@@ -314,7 +314,7 @@ class QuotationController extends Controller
             $hargaBersih = str_replace(
                 ['Rp', '.', ' '],
                 '',
-                $request->harga
+                $request->harga_per_box
             );
 
             $hargaBersih = (float) $hargaBersih;
@@ -324,17 +324,17 @@ class QuotationController extends Controller
 
             // Update quotation
             $quotation->update([
-                'nama_customer'   => $request->nama_customer,
-                'alamat_customer' => $request->alamat_customer,
+                'nama_customer'   => $request->nama_pemesan,
+                'alamat_customer' => $request->alamat_pemesan,
 
-                'penerima'        => $request->penerima,
-                'alamat_penerima' => $request->alamat_penerima,
+                'penerima'        => $request->nama_tempat,
+                'alamat_penerima' => $request->alamat_tempat,
 
                 'tanggal_pesan'   => $request->tanggal_pesan,
                 'tipe_pemesanan'  => $request->tipe_pemesanan,
 
-                'id_barang'       => $request->id_barang,
-                'quantity'        => $request->quantity,
+                'id_barang'       => $request->jenis_kertas,
+                'quantity'        => $request->jumlah_beli,
 
                 'harga'           => $hargaBersih,
                 'total_amount'    => $totalAmount,
@@ -343,7 +343,7 @@ class QuotationController extends Controller
                 'ukuran'          => $request->ukuran,
                 'jumlah_box'      => $request->jumlah_box,
                 'jumlah_ply'      => $request->jumlah_ply,
-                'perbox'          => $request->perbox,
+                'perbox'          => $request->isi_per_box,
                 'perporasi'       => $request->perporasi,
 
                 'keterangan'      => $request->keterangan,

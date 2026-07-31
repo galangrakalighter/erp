@@ -771,7 +771,7 @@
         document.getElementById('modal-title').innerText = 'Edit Quotations';
         form.action = `/quotations/${data.id}`; 
 
-        console.log(data);
+        console.log(data); // Cek konsol browser untuk memastikan data lengkap
         
         // Tambahkan method PUT untuk Laravel
         document.getElementById('method-container').innerHTML = '<input type="hidden" name="_method" value="PUT">';
@@ -779,27 +779,39 @@
         // Masukkan data lama ke dalam input form berdasarkan ID
         document.getElementById('nama_pemesan').value = data.nama_customer || '';
         document.getElementById('alamat_pemesan').value = data.alamat_customer || '';
-        document.getElementById('nama_tempat').value = data.penerima|| '';
+        document.getElementById('nama_tempat').value = data.penerima || '';
         document.getElementById('alamat_tempat').value = data.alamat_penerima || '';
         document.getElementById('tanggal_pesan').value = data.tanggal_pesan || '';
         
+        // Perbaikan Salesman (Pastikan relasi 'sales' dimuat dengan with('sales'))
         if(document.getElementById('salesman')) {
-            let salesId = data.sales.id;
-            document.getElementById('salesman').value = salesId;
+            if(data.sales) {
+                document.getElementById('salesman').value = data.sales.id || data.sales;
+            }
         }
-        if(document.getElementById('cabang')) document.getElementById('cabang').value = data.cabang || '';
+
+        if(document.getElementById('cabang')) {
+            document.getElementById('cabang').value = data.cabang || '';
+        }
+
+        // --- PERBAIKAN UTAMA UNTUK JENIS KERTAS (BARANG) ---
+        // Pastikan di controller Anda menggunakan ->with('barang') atau menyertakan relasi barang
         if(document.getElementById('jenis_kertas')) {
-            let barangId = data.barang.id;
+            let barangId = data.inventory_id || (data.barang ? data.barang.id : '');
             document.getElementById('jenis_kertas').value = barangId;
         }
+
         document.getElementById('tipe_pemesanan').value = data.tipe_pemesanan || '';
         document.getElementById('jumlah_beli').value = data.quantity || '';
         document.getElementById('judul_cetak').value = data.judul_cetak || '';
         document.getElementById('ukuran').value = data.ukuran || '';
-        document.getElementById('jumlah_box').value = data.perbox || '';
+        
+        // --- PERBAIKAN PEMETAAN PROPERTI YANG TERBALIK ---
+        document.getElementById('jumlah_box').value = data.jumlah_box || ''; // Sebelumnya data.perbox (terbalik)
         document.getElementById('harga_per_box').value = data.harga || '';
         document.getElementById('jumlah_ply').value = data.jumlah_ply || '';
-        document.getElementById('perbox').value = data.jumlah_box || '';
+        document.getElementById('perbox').value = data.perbox || ''; // Sebelumnya data.jumlah_box (terbalik)
+        
         document.getElementById('perporasi').value = data.perporasi || '';
         document.getElementById('total_order').value = data.total_amount || '';
         document.getElementById('keterangan').value = data.keterangan || '';
