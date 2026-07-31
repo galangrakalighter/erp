@@ -716,12 +716,35 @@
 
 </div>
 
+<div id="modal-delete" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 hidden p-4">
+    <div class="bg-white rounded-3xl w-full max-w-sm p-8 text-center shadow-2xl">
+        <h2 class="text-xl font-bold mb-4">Hapus Quotation?</h2>
+        <form id="deleteForm" method="POST">
+            @csrf @method('DELETE')
+            <div class="flex items-center justify-end gap-3 w-full mt-4">
+                <button type="button" onclick="closeModals()" class="px-5 py-2 text-gray-600 hover:bg-gray-100 rounded-xl transition">
+                    Batal
+                </button>
+                <button type="submit" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl transition">
+                    Ya, Hapus
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
 
 <script src="{{ asset('js/request-baru-lagi-4.js') }}"></script>
 
 <script>
     function toggleModal(id, show) {
         document.getElementById(id).classList.toggle('hidden', !show);
+    }
+
+    function openDeleteModal(url) {
+        document.getElementById('deleteForm').action = url;
+        toggleModal('modal-delete', true);
     }
 
     function openModalAdd() {
@@ -788,6 +811,7 @@
     // Fungsi Tutup Modal (Batal / Tombol Close)
     function closeModals() {
         toggleModal('modal-po', false);
+        toggleModal('modal-delete', false);
     }
 
     function openApproveModal(data) {
