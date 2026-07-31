@@ -342,7 +342,7 @@ function renderAction(q, index) {
                 SPK Finance
             </button>
             ${
-                q.spk_finance != null
+                q.spk_finance != null && q.laporan != null
                 ?
                 `
                 <button
