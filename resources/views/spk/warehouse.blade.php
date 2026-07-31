@@ -114,6 +114,11 @@
         </tr>
 
         <tr>
+            <td width="150">No Film</td>
+            <td>: {{ $spk->quotation->film }}</td>
+        </tr>
+
+        <tr>
             <td>Tanggal</td>
             <td>: {{ \Carbon\Carbon::parse($spk->created_at)->format('d F Y') }}</td>
         </tr>
