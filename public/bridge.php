@@ -24,7 +24,7 @@ if ($api_key !== $secret_token) {
 $host = "laravel_pgsql";
 $port = "5432";
 $user = "postgres";
-$pass = "Lmg140818!";
+$pass = "Lmg140818";
 $db   = "erp_baru_lagi";
 
 $conn_string = "host=$host port=$port dbname=$db user=$user password=$pass";
