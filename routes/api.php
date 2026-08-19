@@ -109,9 +109,8 @@ Route::post('/cari-affiliator', function (Request $request) {
         2 => ['pipe', 'w'], // STDERR
     ];
 
-    $command =
-        '"' . $python . '"' .
-        ' "' . $script . '"';
+    // Ubah command menjadi Array [python_path, script_path]
+    $command = [$python, $script];
 
     $process = proc_open(
         $command,
