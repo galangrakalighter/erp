@@ -112,11 +112,17 @@ Route::post('/cari-affiliator', function (Request $request) {
     // Ubah command menjadi Array [python_path, script_path]
     $command = [$python, $script];
 
+    $env = [
+        'PATH' => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+        'HOME' => '/var/www'
+    ];
+
     $process = proc_open(
         $command,
         $descriptorSpec,
         $pipes,
-        base_path()
+        base_path(),
+        $env 
     );
 
     if (!is_resource($process)) {
