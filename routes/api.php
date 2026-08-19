@@ -23,7 +23,7 @@ Route::post('/finance/payment/{id}', [FinanceController::class, 'payment']);
 Route::post('/spk-manufacture/laporan/{id}', [SPKController::class, 'sendLaporan']);
 Route::post('/cari-affiliator', function (Request $request) {
 
-    $python = 'C:\\Users\\intel\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe';
+    $python = '/usr/bin/python3.14';
 
     $script = base_path('python/buka_browser.py');
 
