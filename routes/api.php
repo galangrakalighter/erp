@@ -23,7 +23,25 @@ Route::post('/finance/payment/{id}', [FinanceController::class, 'payment']);
 Route::post('/spk-manufacture/laporan/{id}', [SPKController::class, 'sendLaporan']);
 Route::post('/cari-affiliator', function (Request $request) {
 
-    $python = '/usr/bin/python3';
+    $python = null;
+    $possiblePaths = [
+        '/usr/bin/python3',
+        '/usr/local/bin/python3',
+        '/usr/bin/python',
+        '/usr/local/bin/python'
+    ];
+
+    foreach ($possiblePaths as $path) {
+        if (file_exists($path)) {
+            $python = $path;
+            break;
+        }
+    }
+
+    // Fallback jika tidak ketemu
+    if (!$python) {
+        $python = 'python3';
+    }
 
     $script = base_path('python/buka_browser.py');
 
