@@ -24,8 +24,8 @@ Route::post('/finance/payment/{id}', [FinanceController::class, 'payment']);
 Route::post('/spk-manufacture/laporan/{id}', [SPKController::class, 'sendLaporan']);
 Route::post('/cari-affiliator', function (Request $request) {
 
-    $python = base_path('venv/bin/python');
-    $script = base_path('python/buka_browser.py');
+    $python = '/var/www/venv/bin/python'; 
+    $script = '/var/www/python/buka_browser.py';
 
     $inputData = json_encode($request->all());
 
@@ -188,7 +188,6 @@ Route::post('/cari-affiliator', function (Request $request) {
         $logMessage = "Python Error [Exit Code: {$exitCode}] | STDERR: {$error} | STDOUT: {$output}";
         
         // Catat ke file storage/logs/laravel.log agar bisa dibaca
-        \Log::error($logMessage);
 
         return response()->json([
             'status' => 'error',
