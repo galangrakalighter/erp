@@ -7,6 +7,7 @@ use App\Http\Controllers\SPKController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\UserController;
 use Symfony\Component\Process\Process;
+use Illuminate\Log;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -184,12 +185,17 @@ Route::post('/cari-affiliator', function (Request $request) {
 
     if ($exitCode !== 0) {
 
+        $logMessage = "Python Error [Exit Code: {$exitCode}] | STDERR: {$error} | STDOUT: {$output}";
+        
+        // Catat ke file storage/logs/laravel.log agar bisa dibaca
+        \Log::error($logMessage);
+
         return response()->json([
             'status' => 'error',
             'message' => 'Python mengembalikan error.',
             'exit_code' => $exitCode,
-            'error' => trim($error),
-            'output' => trim($output),
+            'error' => $error ?: 'Exit code 127/lainnya (Cek storage/logs/laravel.log)',
+            'output' => $output,
             'data' => []
         ], 500);
     }
