@@ -188,6 +188,7 @@ Route::post('/cari-affiliator', function (Request $request) {
         $logMessage = "Python Error [Exit Code: {$exitCode}] | STDERR: {$error} | STDOUT: {$output}";
         
         // Catat ke file storage/logs/laravel.log agar bisa dibaca
+        \Log::error($logMessage);
 
         return response()->json([
             'status' => 'error',
