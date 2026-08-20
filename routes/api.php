@@ -26,6 +26,8 @@ Route::post('/cari-affiliator', function (Request $request) {
     $python = base_path('venv/bin/python');
     $script = base_path('python/buka_browser.py');
 
+    $inputData = json_encode($request->all());
+
     // =====================================================
     // DATA DARI N8N
     // =====================================================
@@ -113,7 +115,8 @@ Route::post('/cari-affiliator', function (Request $request) {
 
     $env = [
         'PATH' => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
-        'HOME' => '/var/www'
+        'HOME' => base_path('storage'),
+        'PLAYWRIGHT_BROWSERS_PATH' => base_path('storage/playwright-cache')
     ];
 
     $process = proc_open(
@@ -137,10 +140,7 @@ Route::post('/cari-affiliator', function (Request $request) {
     // KIRIM JSON KE PYTHON
     // =====================================================
 
-    fwrite(
-        $pipes[0],
-        $json
-    );
+    fwrite($pipes[0], $inputData);
 
     fclose(
         $pipes[0]
