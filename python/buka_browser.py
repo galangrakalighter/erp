@@ -9,6 +9,9 @@ from playwright.async_api import async_playwright
 import gspread
 from google.oauth2.service_account import Credentials
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+credentials_path = os.path.join(BASE_DIR, 'credentials.json')
+
 def ubah_format_angka(teks_angka):
     if not teks_angka:
         return 0
@@ -181,7 +184,7 @@ async def main():
     ]
 
     try:
-        creds = Credentials.from_service_account_file("credentials.json", scopes=scope)
+        creds = Credentials.from_service_account_file(credentials_path, scopes=scope)
         client = gspread.authorize(creds)
         sheet = client.open("Tes Sheet Tiktok").sheet1
 
